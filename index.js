@@ -1,8 +1,11 @@
 const axios = require("axios");
 const request = require("request");
 const fs = require("fs");
+const htmlParser = require("node-html-parser");
 const Config = require("./config.json");
 require("dotenv").config();
+
+const repeateInterval = 10000;
 
 const articleSections = {
     BedrockPreview: 360001185332,
@@ -17,84 +20,89 @@ function checkForRelease() {
 };
 
 async function callback(error, res, body) {
-    if(error) return setTimeout(() => checkForRelease(), 5000);
+    if(error) {
+        console.log(error);
+        return setTimeout(() => checkForRelease(), repeateInterval);
+    }
     try {
         const data = JSON.parse(body);
         await fileExists(data);
-        const savedData = await JSON.parse(fs.readFileSync("./json/mcupdate-articles.json"));
-        if(savedData.articles.find(a => a.section_id == articleSections.BedrockPreview).id
+
+        const savedData = await JSON.parse(fs.readFileSync("./data/mcupdate-articles.json"));
+        if(savedData.articles.find(a => a.section_id == articleSections.BedrockPreview)?.id
         != data.articles.find(a => a.section_id == articleSections.BedrockPreview).id) {
-
+            console.log("Got data!");
             const currentArticle = data.articles.find(a => a.section_id == articleSections.BedrockPreview);
-            await fs.writeFileSync("./json/mcupdate-articles.json", JSON.stringify(data, null, 4));
-
+            await fs.writeFileSync("./data/mcupdate-articles.json", JSON.stringify(data, null, 4));
+            
             const version = currentArticle.name.replace("Minecraft Beta & Preview - ", "");
-            try {
-                axios.post("https://discord.com/api/v10/channels/" + Config.forumsChannel + "/threads", {
-                        name: version + " - Preview",
-                        message: {
-                            content: "# A new Beta/Preview is rolling out!\n\n- **Version**: " + version + "\n- **Changelog**: " + currentArticle.html_url,
-                        },
-                        applied_tags: [
-                            Config.tags.Preview,
-                        ],
-                    },
-                    {
-                        headers: {
-                            Authorization: "Bot " + process.env.token,
-                        },
-                    },
-                ).then((response) => {
-                    axios.put("https://discord.com/api/v10/channels/" + response.data.id + "/pins/" + response.data.message.id, {},
-                    {
-                        headers: {
-                            Authorization: "Bot " + process.env.token,
-                        },
-                    });
-                }).catch(() => console.log("Failed to create the Post for Preview v" + version + "!"));
-            } catch(e) {}
+            const message = "# A new Beta/Preview is rolling out!\n\n- **Version**: " + version + "\n- **Changelog**: " + currentArticle.html_url;
 
-            console.log("\x1B[32m\x1B[1mSUCCESS | \x1B[0m" + new Date().getHours() + ":" + new Date().getMinutes() + ":" + new Date().getSeconds() + " - " + currentArticle.name);
-            setTimeout(() => checkForRelease(), 5000);
+            const parsed = htmlParser.parse(currentArticle.body);
+		    const image = parsed.getElementsByTagName("img")[0]?.getAttribute("src");
+            console.log(image);
+
+            createForumPost(message, version, image, Config.tags.Preview, true);
+
+            console.log("\x1B[32m\x1B[1mNEW RELEASE | \x1B[0m" + new Date().getHours() + ":" + new Date().getMinutes() + ":" + new Date().getSeconds() + " - " + currentArticle.name);
+            setTimeout(() => checkForRelease(), repeateInterval);
         }
-        else if(savedData.articles.find(a => a.section_id == articleSections.BedrockRelease).id
+        else if(savedData.articles.find(a => a.section_id == articleSections.BedrockRelease)?.id
             != data.articles.find(a => a.section_id == articleSections.BedrockRelease).id) {
 
             const currentArticle = data.articles.find(a => a.section_id == articleSections.BedrockRelease);
-            if(!currentArticle.name.includes("Bedrock")) return setTimeout(() => checkForRelease(), 5000);
+            if(!currentArticle.name.includes("Bedrock")) return setTimeout(() => checkForRelease(), repeateInterval);
 
-            await fs.writeFileSync("./json/mcupdate-articles.json", JSON.stringify(data, null, 4));
+            await fs.writeFileSync("./data/mcupdate-articles.json", JSON.stringify(data, null, 4));
 
             const version = currentArticle.name.replace("Minecraft - ", "").replace(" (Bedrock)", "");
-            try {
-                axios.post("https://discord.com/api/v10/channels/" + Config.forumsChannel + "/threads", {
-                        name: version + " - Release",
-                        message: {
-                            content: "# A new Stable release is rolling out!\n\n- **Version**: " + version + "\n- **Changelog** " + currentArticle.html_url,
-                        },
-                        applied_tags: [
-                            Config.tags.Stable,
-                        ],
-                    },
-                    {
-                        headers: {
-                            Authorization: "Bot " + process.env.token,
-                        },
-                    },
-                ).then((response) => {
-                    axios.put("https://discord.com/api/v10/channels/" + response.data.id + "/pins/" + response.data.message.id, {},
-                    {
-                        headers: {
-                            Authorization: "Bot " + process.env.token,
-                        },
-                    });
-                }).catch(() => console.log("Failed to create the Post for Stable v" + version + "!"));
-            } catch(e) {}
+            const message = "# A new Stable release is rolling out!\n\n- **Version**: " + version + "\n- **Changelog** " + currentArticle.html_url;
 
-            console.log("\x1B[32m\x1B[1mSUCCESS | \x1B[0m" + new Date().getHours() + ":" + new Date().getMinutes() + ":" + new Date().getSeconds() + " | " + currentArticle.name);
-            setTimeout(() => checkForRelease(), 5000);
-        } else setTimeout(() => checkForRelease(), 5000);
-    } catch(e) { setTimeout(() => checkForRelease(), 5000); };
+            const parsed = htmlParser.parse(currentArticle.body);
+		    const image = parsed.getElementsByTagName("img")[0]?.getAttribute("src");
+
+            createForumPost(message, version, image, Config.tags.Stable);
+
+            console.log("\x1B[32m\x1B[1mNEW RELEASE | \x1B[0m" + new Date().getHours() + ":" + new Date().getMinutes() + ":" + new Date().getSeconds() + " | " + currentArticle.name);
+            setTimeout(() => checkForRelease(), repeateInterval);
+        } else setTimeout(() => checkForRelease(), repeateInterval);
+    } catch(e) { console.log(e); setTimeout(() => checkForRelease(), repeateInterval); };
+};
+
+function createForumPost(message, version, image, tag, isPreview = false) {
+    const embeds = [];
+    if(image) embeds.push({ color: 3092790, image: { url: image }});
+    axios.post("https://discord.com/api/v10/channels/" + Config.forumsChannel + "/threads", {
+        name: version + " - " + (isPreview ? "Preview" : "Release"),
+        message: {
+            content: message,
+            embeds,
+        },
+        applied_tags: [
+            tag,
+        ],
+    },
+    {
+        headers: {
+            Authorization: "Bot " + process.env.token,
+        },
+    },
+    )
+    .then((response) => pinMessage(response))
+    .catch((e) => {
+        console.log(e);
+        setTimeout(() => createForumPost(message, version, image, tag, isPreview), 5000)
+    });
+};
+
+function pinMessage(response) {
+    axios.put("https://discord.com/api/v10/channels/" + response.data.id + "/pins/" + response.data.message.id, {},
+    {
+        headers: {
+            Authorization: "Bot " + process.env.token,
+        },
+    })
+    .catch(() => setTimeout(() => pinMessage(response), 5000));
 };
 
 async function fileExists(data) {
