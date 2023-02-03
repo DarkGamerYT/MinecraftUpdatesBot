@@ -91,9 +91,9 @@ function createForumPost(message, article, version, image, tag, isPreview = fals
             content: message,
             embeds,
         },
-        applied_tags: [
+        /*applied_tags: [
             tag,
-        ],
+        ],*/
     },
     {
         headers: {
