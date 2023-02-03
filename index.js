@@ -20,29 +20,26 @@ function checkForRelease() {
 };
 
 async function callback(error, res, body) {
-    if(error) {
-        console.log(error);
-        return setTimeout(() => checkForRelease(), repeateInterval);
-    }
+    if(error) return setTimeout(() => checkForRelease(), repeateInterval);
     try {
         const data = JSON.parse(body);
-        await fileExists(data);
+        const savedData = await readFile(data);
 
-        const savedData = await JSON.parse(fs.readFileSync("./data/mcupdate-articles.json"));
         if(savedData.articles.find(a => a.section_id == articleSections.BedrockPreview)?.id
         != data.articles.find(a => a.section_id == articleSections.BedrockPreview).id) {
-            console.log("Got data!");
+
             const currentArticle = data.articles.find(a => a.section_id == articleSections.BedrockPreview);
             await fs.writeFileSync("./data/mcupdate-articles.json", JSON.stringify(data, null, 4));
-            
+            if(savedData.articles.length < 1) return setTimeout(() => checkForRelease(), repeateInterval);
+
             const version = currentArticle.name.replace("Minecraft Beta & Preview - ", "");
-            const message = "# A new Beta/Preview is rolling out!\n\n- **Version**: " + version + "\n- **Changelog**: " + currentArticle.html_url;
+            const message = "# A new Beta/Preview is rolling out!\n\n- **Version**: " + version + "\n- **Changelog**:";
 
             const parsed = htmlParser.parse(currentArticle.body);
-		    const image = parsed.getElementsByTagName("img")[0]?.getAttribute("src");
-            console.log(image);
+		    const imageSrc = parsed.getElementsByTagName("img")[0]?.getAttribute("src");
+            const image = imageSrc.startsWith("https://feedback.minecraft.net/hc/article_attachments/") ? imageSrc : null;
 
-            createForumPost(message, version, image, Config.tags.Preview, true);
+            createForumPost(message, currentArticle, version, image, Config.tags.Preview, true);
 
             console.log("\x1B[32m\x1B[1mNEW RELEASE | \x1B[0m" + new Date().getHours() + ":" + new Date().getMinutes() + ":" + new Date().getSeconds() + " - " + currentArticle.name);
             setTimeout(() => checkForRelease(), repeateInterval);
@@ -54,24 +51,40 @@ async function callback(error, res, body) {
             if(!currentArticle.name.includes("Bedrock")) return setTimeout(() => checkForRelease(), repeateInterval);
 
             await fs.writeFileSync("./data/mcupdate-articles.json", JSON.stringify(data, null, 4));
+            if(savedData.articles.length < 1) return setTimeout(() => checkForRelease(), repeateInterval);
 
             const version = currentArticle.name.replace("Minecraft - ", "").replace(" (Bedrock)", "");
-            const message = "# A new Stable release is rolling out!\n\n- **Version**: " + version + "\n- **Changelog** " + currentArticle.html_url;
+            const message = "# A new Stable release is rolling out!\n\n- **Version**: " + version + "\n- **Changelog**:";
 
             const parsed = htmlParser.parse(currentArticle.body);
-		    const image = parsed.getElementsByTagName("img")[0]?.getAttribute("src");
+		    const imageSrc = parsed.getElementsByTagName("img")[0]?.getAttribute("src");
+            const image = imageSrc.startsWith("https://feedback.minecraft.net/hc/article_attachments/") ? imageSrc : null;
 
-            createForumPost(message, version, image, Config.tags.Stable);
+            createForumPost(message, currentArticle, version, image, Config.tags.Stable);
 
             console.log("\x1B[32m\x1B[1mNEW RELEASE | \x1B[0m" + new Date().getHours() + ":" + new Date().getMinutes() + ":" + new Date().getSeconds() + " | " + currentArticle.name);
             setTimeout(() => checkForRelease(), repeateInterval);
         } else setTimeout(() => checkForRelease(), repeateInterval);
-    } catch(e) { console.log(e); setTimeout(() => checkForRelease(), repeateInterval); };
+    } catch(e) { setTimeout(() => checkForRelease(), repeateInterval); };
 };
 
-function createForumPost(message, version, image, tag, isPreview = false) {
+function createForumPost(message, article, version, image, tag, isPreview = false) {
     const embeds = [];
-    if(image) embeds.push({ color: 3092790, image: { url: image }});
+    if(image) embeds.push({
+        title: article.name,
+        url: article.html_url,
+        description: (isPreview ? "It's that day of the week!\nA new Minecraft Bedrock Preview is out now!" : "A new stable release of Minecraft Bedrock is out now!"),
+        author: {
+            name: "Minecraft Feedback",
+            url: "https://feedback.minecraft.net/",
+        },
+        thumbnail: {
+            url: "https://theme.zdassets.com/theme_assets/2155033/bc270c23058d513de5124ffea6bf9199af7a2370.png",
+        },
+        image: {
+            url: image,
+        },
+    });
     axios.post("https://discord.com/api/v10/channels/" + Config.forumsChannel + "/threads", {
         name: version + " - " + (isPreview ? "Preview" : "Release"),
         message: {
@@ -89,10 +102,7 @@ function createForumPost(message, version, image, tag, isPreview = false) {
     },
     )
     .then((response) => pinMessage(response))
-    .catch((e) => {
-        console.log(e);
-        setTimeout(() => createForumPost(message, version, image, tag, isPreview), 5000)
-    });
+    .catch((e) => setTimeout(() => createForumPost(message, article, version, image, tag, isPreview), 5000));
 };
 
 function pinMessage(response) {
@@ -105,15 +115,19 @@ function pinMessage(response) {
     .catch(() => setTimeout(() => pinMessage(response), 5000));
 };
 
-async function fileExists(data) {
-    if(!fs.existsSync("./data/"))
-        fs.mkdirSync("./data"), fs.writeFileSync("./data/mcupdate-articles.json", JSON.stringify(data, null, 4));
-    else if(!fs.existsSync("./data/mcupdate-articles.json"))
-        fs.writeFileSync("./data/mcupdate-articles.json", JSON.stringify(data, null, 4));
-    else try {
-        JSON.parse(fs.readFileSync("./data/mcupdate-articles.json"));
+async function readFile(data) {
+    if(!fs.existsSync("./data/")) {
+        fs.mkdirSync("./data");
+        await fs.writeFileSync("./data/mcupdate-articles.json", JSON.stringify(data, null, 4));
+        return JSON.parse(fs.readFileSync("./data/mcupdate-articles.json"));
+    } else if(!fs.existsSync("./data/mcupdate-articles.json")) {
+        await fs.writeFileSync("./data/mcupdate-articles.json", JSON.stringify(data, null, 4));
+        return JSON.parse(fs.readFileSync("./data/mcupdate-articles.json"));
+    } else try {
+        return JSON.parse(fs.readFileSync("./data/mcupdate-articles.json"));
     } catch(e) {
-        fs.writeFileSync("./data/mcupdate-articles.json", JSON.stringify(data, null, 4));
+        await fs.writeFileSync("./data/mcupdate-articles.json", JSON.stringify(data, null, 4));
+        return JSON.parse(fs.readFileSync("./data/mcupdate-articles.json"));
     };
 };
 
