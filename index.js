@@ -33,13 +33,12 @@ async function callback(error, res, body) {
             if(savedData.articles.length < 1) return setTimeout(() => checkForRelease(), repeateInterval);
 
             const version = currentArticle.name.replace("Minecraft Beta & Preview - ", "");
-            const message = "# A new Beta/Preview is rolling out!\n\n- **Version**: " + version + "\n- **Changelog**:";
 
             const parsed = htmlParser.parse(currentArticle.body);
 		    const imageSrc = parsed.getElementsByTagName("img")[0]?.getAttribute("src");
-            const image = imageSrc.startsWith("https://feedback.minecraft.net/hc/article_attachments/") ? imageSrc : null;
+            const image = imageSrc?.startsWith("https://feedback.minecraft.net/hc/article_attachments/") ? imageSrc : null;
 
-            createForumPost(message, currentArticle, version, image, Config.tags.Preview, true);
+            createForumPost(currentArticle, version, image, Config.tags.Preview, true);
 
             console.log("\x1B[32m\x1B[1mNEW RELEASE | \x1B[0m" + new Date().getHours() + ":" + new Date().getMinutes() + ":" + new Date().getSeconds() + " - " + currentArticle.name);
             setTimeout(() => checkForRelease(), repeateInterval);
@@ -52,43 +51,52 @@ async function callback(error, res, body) {
 
             await fs.writeFileSync("./data/mcupdate-articles.json", JSON.stringify(data, null, 4));
             if(savedData.articles.length < 1) return setTimeout(() => checkForRelease(), repeateInterval);
-
+            
             const version = currentArticle.name.replace("Minecraft - ", "").replace(" (Bedrock)", "");
-            const message = "# A new Stable release is rolling out!\n\n- **Version**: " + version + "\n- **Changelog**:";
 
             const parsed = htmlParser.parse(currentArticle.body);
 		    const imageSrc = parsed.getElementsByTagName("img")[0]?.getAttribute("src");
-            const image = imageSrc.startsWith("https://feedback.minecraft.net/hc/article_attachments/") ? imageSrc : null;
+            const image = imageSrc?.startsWith("https://feedback.minecraft.net/hc/article_attachments/") ? imageSrc : null;
 
-            createForumPost(message, currentArticle, version, image, Config.tags.Stable);
+            createForumPost(currentArticle, version, image, Config.tags.Stable);
 
             console.log("\x1B[32m\x1B[1mNEW RELEASE | \x1B[0m" + new Date().getHours() + ":" + new Date().getMinutes() + ":" + new Date().getSeconds() + " | " + currentArticle.name);
             setTimeout(() => checkForRelease(), repeateInterval);
         } else setTimeout(() => checkForRelease(), repeateInterval);
-    } catch(e) { setTimeout(() => checkForRelease(), repeateInterval); };
+    } catch(e) { console.log(e); setTimeout(() => checkForRelease(), repeateInterval); };
 };
 
-function createForumPost(message, article, version, image, tag, isPreview = false) {
+function createForumPost(article, version, image, tag, isPreview = false) {
     const embeds = [];
-    if(image) embeds.push({
+    embeds.push({
         title: article.name,
         url: article.html_url,
+        color: (isPreview ? 16763904 : 4652839),
         description: (isPreview ? "It's that day of the week!\nA new Minecraft Bedrock Preview is out now!" : "A new stable release of Minecraft Bedrock is out now!"),
         author: {
             name: "Minecraft Feedback",
-            url: "https://feedback.minecraft.net/",
+            url: (
+                isPreview
+                ? "https://feedback.minecraft.net/hc/en-us/sections/360001185332-Beta-and-Preview-Information-and-Changelogs"
+                : "https://feedback.minecraft.net/hc/en-us/sections/360001186971-Release-Changelogs"
+            ),
+            icon_url: "https://cdn.discordapp.com/attachments/1071081145149689857/1071089941985112064/Mojang.png",
         },
         thumbnail: {
-            url: "https://theme.zdassets.com/theme_assets/2155033/bc270c23058d513de5124ffea6bf9199af7a2370.png",
+            url: (
+                isPreview
+                ? "https://cdn.discordapp.com/attachments/1071081145149689857/1071088108898091139/mcpreview.png"
+                : "https://cdn.discordapp.com/attachments/1071081145149689857/1071088108642258984/icon.png"
+            ),
         },
         image: {
             url: image,
         },
+        timestamp: article.updated_at,
     });
     axios.post("https://discord.com/api/v10/channels/" + Config.forumsChannel + "/threads", {
         name: version + " - " + (isPreview ? "Preview" : "Release"),
         message: {
-            content: message,
             embeds,
         },
         applied_tags: [
@@ -102,7 +110,10 @@ function createForumPost(message, article, version, image, tag, isPreview = fals
     },
     )
     .then((response) => pinMessage(response))
-    .catch(() => setTimeout(() => createForumPost(message, article, version, image, tag, isPreview), 5000));
+    .catch((e) => {
+        console.log(e);
+        setTimeout(() => createForumPost(article, version, image, tag, isPreview), 5000)
+    });
 };
 
 function pinMessage(response) {
