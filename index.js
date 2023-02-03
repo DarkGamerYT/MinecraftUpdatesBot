@@ -91,9 +91,9 @@ function createForumPost(message, article, version, image, tag, isPreview = fals
             content: message,
             embeds,
         },
-        /*applied_tags: [
+        applied_tags: [
             tag,
-        ],*/
+        ],
     },
     {
         headers: {
@@ -102,7 +102,7 @@ function createForumPost(message, article, version, image, tag, isPreview = fals
     },
     )
     .then((response) => pinMessage(response))
-    .catch((e) => setTimeout(() => createForumPost(message, article, version, image, tag, isPreview), 5000));
+    .catch(() => setTimeout(() => createForumPost(message, article, version, image, tag, isPreview), 5000));
 };
 
 function pinMessage(response) {
