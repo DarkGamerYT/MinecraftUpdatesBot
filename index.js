@@ -5,7 +5,7 @@ const htmlParser = require("node-html-parser");
 const Config = require("./config.json");
 require("dotenv").config();
 
-const repeateInterval = 10000;
+const repeateInterval = 15000;
 
 const articleSections = {
     BedrockPreview: 360001185332,
@@ -16,54 +16,57 @@ function checkForRelease() {
     request({
         url: "https://feedback.minecraft.net/api/v2/help_center/en-us/articles.json",
         method: "GET",
-    }, callback);
-};
-
-async function callback(error, res, body) {
-    if(error) return setTimeout(() => checkForRelease(), repeateInterval);
-    try {
-        const data = JSON.parse(body);
-        const savedData = await readFile(data);
-
-        if(savedData.articles.find(a => a.section_id == articleSections.BedrockPreview)?.id
-        != data.articles.find(a => a.section_id == articleSections.BedrockPreview).id) {
-
-            const currentArticle = data.articles.find(a => a.section_id == articleSections.BedrockPreview);
+    }, async (error, res, body) => {
+        if(error) return setTimeout(() => checkForRelease(), repeateInterval);
+        try {
+            const data = JSON.parse(body);
+            const savedData = await getSavedData(data);
             await fs.writeFileSync("./data/mcupdate-articles.json", JSON.stringify(data, null, 4));
-            if(savedData.articles.length < 1) return setTimeout(() => checkForRelease(), repeateInterval);
-
-            const version = currentArticle.name.replace("Minecraft Beta & Preview - ", "");
-
-            const parsed = htmlParser.parse(currentArticle.body);
-		    const imageSrc = parsed.getElementsByTagName("img")[0]?.getAttribute("src");
-            const image = imageSrc?.startsWith("https://feedback.minecraft.net/hc/article_attachments/") ? imageSrc : null;
-
-            createForumPost(currentArticle, version, image, Config.tags.Preview, true);
-
-            console.log("\x1B[32m\x1B[1mNEW RELEASE | \x1B[0m" + new Date().getHours() + ":" + new Date().getMinutes() + ":" + new Date().getSeconds() + " - " + currentArticle.name);
-            setTimeout(() => checkForRelease(), repeateInterval);
-        }
-        else if(savedData.articles.find(a => a.section_id == articleSections.BedrockRelease)?.id
-            != data.articles.find(a => a.section_id == articleSections.BedrockRelease).id) {
-
-            const currentArticle = data.articles.find(a => a.section_id == articleSections.BedrockRelease);
-            if(!currentArticle.name.includes("Bedrock")) return setTimeout(() => checkForRelease(), repeateInterval);
-
-            await fs.writeFileSync("./data/mcupdate-articles.json", JSON.stringify(data, null, 4));
+            
             if(savedData.articles.length < 1) return setTimeout(() => checkForRelease(), repeateInterval);
             
-            const version = currentArticle.name.replace("Minecraft - ", "").replace(" (Bedrock)", "");
+            const latestStable = data.articles.find(a => a.section_id == articleSections.BedrockRelease && !a.title.includes("Java Edition"));
+            const latestPreview = data.articles.find(a => a.section_id == articleSections.BedrockPreview);
+            
+            const lastSavedStable = savedData.articles.find(a => a.section_id == articleSections.BedrockRelease && !a.title.includes("Java Edition"));
+            const lastSavedPreview = savedData.articles.find(a => a.section_id == articleSections.BedrockPreview);
+            
+            if(lastSavedPreview?.id != latestPreview?.id) {
+                const version = latestPreview.name.replace("Minecraft Beta & Preview - ", "");
 
-            const parsed = htmlParser.parse(currentArticle.body);
-		    const imageSrc = parsed.getElementsByTagName("img")[0]?.getAttribute("src");
-            const image = imageSrc?.startsWith("https://feedback.minecraft.net/hc/article_attachments/") ? imageSrc : null;
+                const parsed = htmlParser.parse(latestPreview.body);
+                const imageSrc = parsed.getElementsByTagName("img")[0]?.getAttribute("src");
+                const image = imageSrc?.startsWith("https://feedback.minecraft.net/hc/article_attachments/") ? imageSrc : null;
 
-            createForumPost(currentArticle, version, image, Config.tags.Stable);
+                createForumPost(latestPreview, version, image, Config.tags.Preview, true);
 
-            console.log("\x1B[32m\x1B[1mNEW RELEASE | \x1B[0m" + new Date().getHours() + ":" + new Date().getMinutes() + ":" + new Date().getSeconds() + " | " + currentArticle.name);
-            setTimeout(() => checkForRelease(), repeateInterval);
-        } else setTimeout(() => checkForRelease(), repeateInterval);
-    } catch(e) { console.log(e); setTimeout(() => checkForRelease(), repeateInterval); };
+                console.log("\x1B[32m\x1B[1mNEW RELEASE | \x1B[0m" + new Date().getHours() + ":" + new Date().getMinutes() + ":" + new Date().getSeconds() + " - " + latestPreview.name);
+                setTimeout(() => checkForRelease(), repeateInterval);
+            } else if(lastSavedStable?.id != latestStable?.id) {
+                const version = latestStable.name.replace("Minecraft - ", "").replace(" (Bedrock)", "");
+
+                const parsed = htmlParser.parse(latestStable.body);
+                const imageSrc = parsed.getElementsByTagName("img")[0]?.getAttribute("src");
+                const image = imageSrc?.startsWith("https://feedback.minecraft.net/hc/article_attachments/") ? imageSrc : null;
+
+                createForumPost(latestStable, version, image, Config.tags.Stable);
+
+                console.log("\x1B[32m\x1B[1mNEW RELEASE | \x1B[0m" + new Date().getHours() + ":" + new Date().getMinutes() + ":" + new Date().getSeconds() + " - " + latestPreview.name);
+                setTimeout(() => checkForRelease(), repeateInterval);
+            } else setTimeout(() => checkForRelease(), repeateInterval);
+        } catch(e) {}
+    });
+};
+
+async function getSavedData(data) {
+    if(!fs.existsSync("./data")) fs.mkdirSync("./data");
+    if(!fs.existsSync("./data/mcupdate-articles.json")) {
+        fs.writeFile("./data/mcupdate-articles.json", JSON.stringify(data, null, 4), () => {
+            return data;
+        });
+    } else {
+        return JSON.parse(fs.readFileSync("./data/mcupdate-articles.json"));
+    };
 };
 
 function createForumPost(article, version, image, tag, isPreview = false) {
@@ -110,10 +113,7 @@ function createForumPost(article, version, image, tag, isPreview = false) {
     },
     )
     .then((response) => pinMessage(response))
-    .catch((e) => {
-        console.log(e);
-        setTimeout(() => createForumPost(article, version, image, tag, isPreview), 5000)
-    });
+    .catch((e) => setTimeout(() => createForumPost(article, version, image, tag, isPreview), 5000));
 };
 
 function pinMessage(response) {
@@ -124,22 +124,6 @@ function pinMessage(response) {
         },
     })
     .catch(() => setTimeout(() => pinMessage(response), 5000));
-};
-
-async function readFile(data) {
-    if(!fs.existsSync("./data/")) {
-        fs.mkdirSync("./data");
-        await fs.writeFileSync("./data/mcupdate-articles.json", JSON.stringify(data, null, 4));
-        return JSON.parse(fs.readFileSync("./data/mcupdate-articles.json"));
-    } else if(!fs.existsSync("./data/mcupdate-articles.json")) {
-        await fs.writeFileSync("./data/mcupdate-articles.json", JSON.stringify(data, null, 4));
-        return JSON.parse(fs.readFileSync("./data/mcupdate-articles.json"));
-    } else try {
-        return JSON.parse(fs.readFileSync("./data/mcupdate-articles.json"));
-    } catch(e) {
-        await fs.writeFileSync("./data/mcupdate-articles.json", JSON.stringify(data, null, 4));
-        return JSON.parse(fs.readFileSync("./data/mcupdate-articles.json"));
-    };
 };
 
 console.log(`\x1B[33m\x1B[1mINFO | \x1B[37mStarting\n\x1B[0m`);
