@@ -154,44 +154,6 @@ const headers = {
 };
 
 function createForumPost(article, version, image, tag, isPreview = false) {
-    const embeds = [];
-    embeds.push(
-        {
-            title: article.name,
-            url: article.html_url,
-            color: (
-                isPreview 
-                    ? 16763904
-                    : 4652839
-            ),
-            description: (
-                isPreview
-                    ? "It's that day of the week!\nA new Minecraft Bedrock Preview is out now!"
-                    : "A new stable release of Minecraft Bedrock is out now!"
-            ),
-            author: {
-                name: "Minecraft Feedback",
-                url: (
-                    isPreview
-                        ? "https://feedback.minecraft.net/hc/en-us/sections/360001185332-Beta-and-Preview-Information-and-Changelogs"
-                        : "https://feedback.minecraft.net/hc/en-us/sections/360001186971-Release-Changelogs"
-                ),
-                icon_url: "https://cdn.discordapp.com/attachments/1071081145149689857/1071089941985112064/Mojang.png",
-            },
-            thumbnail: {
-                url: (
-                    isPreview
-                        ? "https://cdn.discordapp.com/attachments/1071081145149689857/1071088108898091139/mcpreview.png"
-                        : "https://cdn.discordapp.com/attachments/1071081145149689857/1071088108642258984/icon.png"
-                ),
-            },
-            image: {
-                url: image,
-            },
-            timestamp: article.updated_at,
-        }
-    );
-    
     axios.post(
         "https://discord.com/api/v10/channels/" + Config.forumsChannel + "/threads",
         {
@@ -204,7 +166,42 @@ function createForumPost(article, version, image, tag, isPreview = false) {
                         : "Release"
                 ),
             message: {
-                embeds,
+                embeds: [
+                    {
+                        title: article.name,
+                        url: article.html_url,
+                        color: (
+                            isPreview 
+                                ? 16763904
+                                : 4652839
+                        ),
+                        description: (
+                            isPreview
+                                ? "It's that day of the week!\nA new Minecraft Bedrock Preview is out now!"
+                                : "A new stable release of Minecraft Bedrock is out now!"
+                        ),
+                        author: {
+                            name: "Minecraft Feedback",
+                                url: (
+                                    isPreview
+                                        ? "https://feedback.minecraft.net/hc/en-us/sections/360001185332-Beta-and-Preview-Information-and-Changelogs"
+                                        : "https://feedback.minecraft.net/hc/en-us/sections/360001186971-Release-Changelogs"
+                                ),
+                                icon_url: "https://cdn.discordapp.com/attachments/1071081145149689857/1071089941985112064/Mojang.png",
+                        },
+                        thumbnail: {
+                            url: (
+                                isPreview
+                                    ? "https://cdn.discordapp.com/attachments/1071081145149689857/1071088108898091139/mcpreview.png"
+                                    : "https://cdn.discordapp.com/attachments/1071081145149689857/1071088108642258984/icon.png"
+                            ),
+                        },
+                        image: {
+                            url: image,
+                        },
+                        timestamp: article.updated_at,
+                    },
+                ],
             },
             applied_tags: [
                 tag,
@@ -225,10 +222,7 @@ function createForumPost(article, version, image, tag, isPreview = false) {
 
 function pinMessage(response) {
     axios.put(
-        "https://discord.com/api/v10/channels/" +
-        response.data.id +
-        "/pins/" +
-        response.data.message.id,
+        "https://discord.com/api/v10/channels/" + response.data.id + "/pins/" + response.data.message.id,
         {},
         headers,
     )
