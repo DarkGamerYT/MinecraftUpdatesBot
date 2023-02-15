@@ -195,7 +195,14 @@ function createForumPost(article, version, image, tag, isPreview = false) {
     axios.post(
         "https://discord.com/api/v10/channels/" + Config.forumsChannel + "/threads",
         {
-            name: version + " - " + (isPreview ? "Preview" : "Release"),
+            name: 
+                version +
+                " - " +
+                (
+                    isPreview
+                        ? "Preview"
+                        : "Release"
+                ),
             message: {
                 embeds,
             },
@@ -218,7 +225,10 @@ function createForumPost(article, version, image, tag, isPreview = false) {
 
 function pinMessage(response) {
     axios.put(
-        "https://discord.com/api/v10/channels/" + response.data.id + "/pins/" + response.data.message.id,
+        "https://discord.com/api/v10/channels/" +
+        response.data.id +
+        "/pins/" +
+        response.data.message.id,
         {},
         headers,
     )
