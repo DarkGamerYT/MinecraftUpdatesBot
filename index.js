@@ -5,7 +5,7 @@ const htmlParser = require( "node-html-parser" );
 const Config = require( "./config.json" );
 require( "dotenv" ).config();
 
-const repeateInterval = 15000;
+const repeateInterval = 60000;
 const articleSections = {
     BedrockPreview: 360001185332,
     BedrockRelease: 360001186971,
