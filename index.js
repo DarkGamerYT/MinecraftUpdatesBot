@@ -1,26 +1,24 @@
-const axios = require("axios");
-const request = require("request");
-const fs = require("fs");
-const htmlParser = require("node-html-parser");
-const Config = require("./config.json");
-require("dotenv").config();
+const axios = require( "axios" );
+const request = require( "request" );
+const fs = require( "fs" );
+const htmlParser = require( "node-html-parser" );
+const Config = require( "./config.json" );
+require( "dotenv" ).config();
 
-const repeateInterval = 60000;
+const repeateInterval = 15000;
 const articleSections = {
     BedrockPreview: 360001185332,
     BedrockRelease: 360001186971,
 };
 
-function checkForRelease() {
+const checkForRelease = () => {
     request(
         {
             url: "https://feedback.minecraft.net/api/v2/help_center/en-us/articles.json",
             method: "GET",
         },
         async (error, res, body) => {
-            if(
-                error
-            )
+            if (error)
                 return setTimeout(
                     () => checkForRelease(),
                     repeateInterval,
@@ -32,7 +30,7 @@ function checkForRelease() {
 					data.articles.filter(
 						(a) => 
 							a.section_id == articleSections.BedrockRelease
-							&& !a.title.includes("Java Edition")
+							&& !a.title.includes( "Java Edition" )
 					).map(
 						(a) => (
 							{
@@ -68,24 +66,15 @@ function checkForRelease() {
 					true,
 				);
             
-                if(
-					savedData.length < 1
-					|| savedPreviewData.length < 1
-				)
-                    return setTimeout(
-                        () => checkForRelease(),
-                        repeateInterval,
-                    );
-            
                 const latestStable = data.articles.find(
                     (a) => 
                         a.section_id == articleSections.BedrockRelease
-                        && !a.title.includes("Java Edition")
+                        && !a.title.includes( "Java Edition" )
                 );
                 const lastSavedStable = savedData.find(
                     (a) => 
                         a.section_id == articleSections.BedrockRelease
-                        && !a.title.includes("Java Edition")
+                        && !a.title.includes( "Java Edition" )
                 );
             
                 const latestPreview = data.articles.find(
@@ -95,12 +84,12 @@ function checkForRelease() {
                     (a) => a.section_id == articleSections.BedrockPreview
                 );
             
-                if(lastSavedPreview?.id != latestPreview?.id) {
+                if (lastSavedPreview?.id != latestPreview?.id) {
                     const version = latestPreview.name
-                        .replace( "Minecraft Beta & Preview - ", "");
+                        .replace( "Minecraft Beta & Preview - ", "" );
 
                     const parsed = htmlParser.parse(latestPreview.body);
-                    const imageSrc = parsed.getElementsByTagName("img")[0]?.getAttribute("src");
+                    const imageSrc = parsed.getElementsByTagName( "img" )[0]?.getAttribute( "src" );
                     const image = 
                         imageSrc?.startsWith(
                             "https://feedback.minecraft.net/hc/article_attachments/"
@@ -109,18 +98,11 @@ function checkForRelease() {
                             : null;
 
                     createForumPost(
-                        latestPreview,
-                        version,
-                        image,
-                        Config.tags.Preview,
-                        true,
+						latestPreview, version, image, Config.tags.Preview, true,
                     );
 
                     console.log(
-                        "\n\x1B[0m" +
-                        new Date().toLocaleTimeString() +
-                        " \x1B[32m\x1B[1m[NEW RELEASE] \x1B[0m- ",
-                        latestPreview.name
+                        "\n\x1B[0m" + new Date().toLocaleTimeString() + " \x1B[32m\x1B[1m[NEW RELEASE] \x1B[0m- ", latestPreview.name
                     );
 					
 					await fs.writeFileSync(
@@ -151,13 +133,15 @@ function checkForRelease() {
                         () => checkForRelease(),
                         repeateInterval,
                     );
-                } else if(lastSavedStable?.id != latestStable?.id) {
+                }
+				
+				else if (lastSavedStable?.id != latestStable?.id) {
                     const version = latestStable.name
-                        .replace("Minecraft - ", "")
-                        .replace(" (Bedrock)", "");
+                        .replace( "Minecraft - ", "" )
+                        .replace( " (Bedrock)", "" );
 
                     const parsed = htmlParser.parse(latestStable.body);
-                    const imageSrc = parsed.getElementsByTagName("img")[0]?.getAttribute("src");
+                    const imageSrc = parsed.getElementsByTagName( "img" )[0]?.getAttribute( "src" );
                     const image = 
                         imageSrc?.startsWith(
                             "https://feedback.minecraft.net/hc/article_attachments/"
@@ -166,17 +150,11 @@ function checkForRelease() {
                             : null;
 
                     createForumPost(
-                        latestStable,
-                        version,
-                        image,
-                        Config.tags.Stable,
+                        latestStable, version, image, Config.tags.Stable,
                     );
 
                     console.log(
-                        "\n\x1B[0m" +
-                        new Date().toLocaleTimeString() +
-                        " \x1B[32m\x1B[1m[NEW RELEASE] \x1B[0m- ",
-                        latestStable.name
+                        "\n\x1B[0m" + new Date().toLocaleTimeString() + " \x1B[32m\x1B[1m[NEW RELEASE] \x1B[0m- ", latestStable.name
                     );
 					
 					await fs.writeFileSync(
@@ -185,7 +163,7 @@ function checkForRelease() {
 							data.articles.filter(
 								(a) =>
 									a.section_id == articleSections.BedrockRelease
-									&& !a.title.includes("Java Edition")
+									&& !a.title.includes( "Java Edition" )
 							).map(
 								(a) => (
 									{
@@ -220,21 +198,47 @@ function checkForRelease() {
     );
 };
 
-async function getSavedData(data, preview = false) {
-    if(!fs.existsSync("./data"))
-        fs.mkdirSync("./data");
+const getSavedData = async (
+	data, preview = false,
+) => {
+    if (!fs.existsSync( "./data" ))
+        fs.mkdirSync( "./data" );
         
-    if(!fs.existsSync("./data/" + (preview ? "preview-articles" : "stable-articles") + ".json")) {
+    if (
+		!fs.existsSync(
+			"./data/"
+			+ (
+				preview
+					? "preview-articles"
+					: "stable-articles"
+			)
+			+ ".json"
+		)
+	) {
         fs.writeFile(
-            "./data/" + (preview ? "preview-articles" : "stable-articles") + ".json", 
+            "./data/"
+			+ (
+				preview
+					? "preview-articles"
+					: "stable-articles"
+			)
+			+ ".json", 
             JSON.stringify(data, null, 4), 
-            () => {
-                return data;
-            }
+            () => {},
         );
+		
+		return data;
     } else {
         return JSON.parse(
-            fs.readFileSync("./data/" + (preview ? "preview-articles" : "stable-articles") + ".json")
+            fs.readFileSync(
+				"./data/"
+				+ (
+					preview
+						? "preview-articles"
+						: "stable-articles"
+				)
+				+ ".json"
+			),
         );
     };
 };
@@ -245,7 +249,9 @@ const headers = {
     },
 };
 
-function createForumPost(article, version, image, tag, isPreview = false) {
+const createForumPost = (
+	article, version, image, tag, isPreview = false,
+) => {
     const embeds = [];
     embeds.push(
         {
@@ -353,12 +359,9 @@ function createForumPost(article, version, image, tag, isPreview = false) {
     );
 };
 
-function pinMessage(response) {
+const pinMessage = ( response ) => {
     axios.put(
-        "https://discord.com/api/v10/channels/" +
-        response.id +
-        "/pins/" +
-        response.message.id,
+        "https://discord.com/api/v10/channels/" + response.id + "/pins/" + response.message.id,
         {},
         headers,
     )
@@ -375,11 +378,9 @@ const pings = [
 	"588670754233516032",
 ];
 
-function pingPoggy(response) {
+const pingPoggy = ( response ) => {
 	axios.post(
-		"https://discord.com/api/v10/channels/"
-		+ response.id
-		+ "/messages",
+		"https://discord.com/api/v10/channels/" + response.id + "/messages",
 		{
 			content: (
 				"**Pings**:\n>>> "
@@ -393,49 +394,31 @@ function pingPoggy(response) {
 	).then(
 		({ data: r }) => {
 			console.log(
-				"\x1B[0m" +
-				new Date().toLocaleTimeString() +
-				" \x1B[32m\x1B[1m[SUCCESS] \x1B[0m- " +
-				"Successfully pinged Poggy!"
+				"\x1B[0m" + new Date().toLocaleTimeString() + " \x1B[32m\x1B[1m[SUCCESS] \x1B[0m- Successfully pinged Poggy!"
 			);
 			
 			axios.delete(
-				"https://discord.com/api/v10/channels/"
-				+ response.id
-				+ "/messages/"
-				+ r.id,
+				"https://discord.com/api/v10/channels/" + response.id + "/messages/" + r.id,
 				headers,
 			).then(
 				(re) => console.log(
-					"\x1B[0m" +
-					new Date().toLocaleTimeString() +
-					" \x1B[32m\x1B[1m[SUCCESS] \x1B[0m- " +
-					"SUccessfully deleted the ping message!"
+					"\x1B[0m" + new Date().toLocaleTimeString() + " \x1B[32m\x1B[1m[SUCCESS] \x1B[0m- SUccessfully deleted the ping message!"
 				),
 			).catch(
 				(e) => console.log(
-					"\x1B[0m" +
-					new Date().toLocaleTimeString() +
-					" \x1B[31m\x1B[1m[ERROR] \x1B[0m- " +
-					"Failed to delete the ping message :["
+					"\x1B[0m" + new Date().toLocaleTimeString() + " \x1B[31m\x1B[1m[ERROR] \x1B[0m- Failed to delete the ping message :["
 				),
 			);
 		},
 	).catch(
 		(e) => console.log(
-			"\x1B[0m" +
-			new Date().toLocaleTimeString() +
-			" \x1B[31m\x1B[1m[ERROR] \x1B[0m- ",
-			"Failed to ping Poggy :["
+			"\x1B[0m" + new Date().toLocaleTimeString() + " \x1B[31m\x1B[1m[ERROR] \x1B[0m- Failed to ping Poggy :["
 		),
 	);
 };
 
 console.log(
-    "\x1B[0m" +
-    new Date().toLocaleTimeString() +
-    " \x1B[33m\x1B[1m[INFO] \x1B[0m- ",
-    "Starting..."
+    "\x1B[0m" + new Date().toLocaleTimeString() + " \x1B[33m\x1B[1m[INFO] \x1B[0m- Starting..."
 );
 
 checkForRelease();
