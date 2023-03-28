@@ -5,7 +5,7 @@ const htmlParser = require("node-html-parser");
 const Config = require("./config.json");
 require("dotenv").config();
 
-const repeateInterval = 15000;
+const repeateInterval = 60000;
 const articleSections = {
     BedrockPreview: 360001185332,
     BedrockRelease: 360001186971,
@@ -18,24 +18,63 @@ function checkForRelease() {
             method: "GET",
         },
         async (error, res, body) => {
-            if(error)
+            if(
+                error
+            )
                 return setTimeout(
                     () => checkForRelease(),
-                    repeateInterval
+                    repeateInterval,
                 );
                 
             try {
                 const data = JSON.parse(body);
-                const savedData = await getSavedData(data);
-                await fs.writeFileSync(
-                    "./data/mcupdate-articles.json",
-                    JSON.stringify(data, null, 4)
-                );
+                const savedData = await getSavedData(
+					data.articles.filter(
+						(a) => 
+							a.section_id == articleSections.BedrockRelease
+							&& !a.title.includes("Java Edition")
+					).map(
+						(a) => (
+							{
+								id: a.id,
+								title: a.title,
+								body: a.body,
+								html_url: a.html_url,
+								section_id: a.section_id,
+								created_at: a.created_at,
+								updated_at: a.updated_at,
+								edited_at: a.edited_at,
+							}
+						),
+					),
+				);
+				const savedPreviewData = await getSavedData(
+					data.articles.filter(
+						(a) => a.section_id == articleSections.BedrockPreview
+					).map(
+						(a) => (
+							{
+								id: a.id,
+								title: a.title,
+								body: a.body,
+								html_url: a.html_url,
+								section_id: a.section_id,
+								created_at: a.created_at,
+								updated_at: a.updated_at,
+								edited_at: a.edited_at,
+							}
+						),
+					),
+					true,
+				);
             
-                if(savedData.articles.length < 1)
+                if(
+					savedData.length < 1
+					|| savedPreviewData.length < 1
+				)
                     return setTimeout(
                         () => checkForRelease(),
-                        repeateInterval
+                        repeateInterval,
                     );
             
                 const latestStable = data.articles.find(
@@ -43,7 +82,7 @@ function checkForRelease() {
                         a.section_id == articleSections.BedrockRelease
                         && !a.title.includes("Java Edition")
                 );
-                const lastSavedStable = savedData.articles.find(
+                const lastSavedStable = savedData.find(
                     (a) => 
                         a.section_id == articleSections.BedrockRelease
                         && !a.title.includes("Java Edition")
@@ -52,7 +91,7 @@ function checkForRelease() {
                 const latestPreview = data.articles.find(
                     (a) => a.section_id == articleSections.BedrockPreview
                 );
-                const lastSavedPreview = savedData.articles.find(
+                const lastSavedPreview = savedPreviewData.find(
                     (a) => a.section_id == articleSections.BedrockPreview
                 );
             
@@ -74,18 +113,43 @@ function checkForRelease() {
                         version,
                         image,
                         Config.tags.Preview,
-                        true
+                        true,
                     );
 
                     console.log(
-                        "\x1B[32m\x1B[1mNEW RELEASE | \x1B[0m" +
+                        "\n\x1B[0m" +
                         new Date().toLocaleTimeString() +
-                        " - " +
+                        " \x1B[32m\x1B[1m[NEW RELEASE] \x1B[0m- ",
                         latestPreview.name
                     );
+					
+					await fs.writeFileSync(
+						"./data/preview-articles.json",
+						JSON.stringify(
+							data.articles.filter(
+								(a) => a.section_id == articleSections.BedrockPreview
+							).map(
+								(a) => (
+									{
+										id: a.id,
+										title: a.title,
+										body: a.body,
+										html_url: a.html_url,
+										section_id: a.section_id,
+										created_at: a.created_at,
+										updated_at: a.updated_at,
+										edited_at: a.edited_at,
+									}
+								),
+							),
+							null,
+							4,
+						),
+					);
+					
                     setTimeout(
                         () => checkForRelease(),
-                        repeateInterval
+                        repeateInterval,
                     );
                 } else if(lastSavedStable?.id != latestStable?.id) {
                     const version = latestStable.name
@@ -105,45 +169,73 @@ function checkForRelease() {
                         latestStable,
                         version,
                         image,
-                        Config.tags.Stable
+                        Config.tags.Stable,
                     );
 
                     console.log(
-                        "\x1B[32m\x1B[1mNEW RELEASE | \x1B[0m" +
+                        "\n\x1B[0m" +
                         new Date().toLocaleTimeString() +
-                        " - " +
+                        " \x1B[32m\x1B[1m[NEW RELEASE] \x1B[0m- ",
                         latestStable.name
                     );
-                    setTimeout(
+					
+					await fs.writeFileSync(
+						"./data/stable-articles.json",
+						JSON.stringify(
+							data.articles.filter(
+								(a) =>
+									a.section_id == articleSections.BedrockRelease
+									&& !a.title.includes("Java Edition")
+							).map(
+								(a) => (
+									{
+										id: a.id,
+										title: a.title,
+										body: a.body,
+										html_url: a.html_url,
+										section_id: a.section_id,
+										created_at: a.created_at,
+										updated_at: a.updated_at,
+										edited_at: a.edited_at,
+									}
+								),
+							),
+							null,
+							4,
+						),
+					);
+                    
+					setTimeout(
                         () => checkForRelease(),
-                        repeateInterval
+                        repeateInterval,
                     );
                 } else setTimeout(
                     () => checkForRelease(),
-                    repeateInterval
+                    repeateInterval,
                 );
-            } catch(e) {}
-        }
+            } catch(e) {
+              console.log(e);
+            };
+        },
     );
 };
 
-async function getSavedData(data) {
+async function getSavedData(data, preview = false) {
     if(!fs.existsSync("./data"))
         fs.mkdirSync("./data");
         
-    if(!fs.existsSync("./data/mcupdate-articles.json")) {
+    if(!fs.existsSync("./data/" + (preview ? "preview-articles" : "stable-articles") + ".json")) {
         fs.writeFile(
-            "./data/mcupdate-articles.json", 
+            "./data/" + (preview ? "preview-articles" : "stable-articles") + ".json", 
             JSON.stringify(data, null, 4), 
             () => {
                 return data;
             }
         );
     } else {
-        return
-            JSON.parse(
-                fs.readFileSync("./data/mcupdate-articles.json")
-            );
+        return JSON.parse(
+            fs.readFileSync("./data/" + (preview ? "preview-articles" : "stable-articles") + ".json")
+        );
     };
 };
 
@@ -154,6 +246,47 @@ const headers = {
 };
 
 function createForumPost(article, version, image, tag, isPreview = false) {
+    const embeds = [];
+    embeds.push(
+        {
+            title: article.name,
+            url: article.html_url,
+            color: (
+                isPreview 
+                    ? 16763904
+                    : 4652839
+            ),
+            description: (
+                isPreview
+                    ? "It's that day of the week!\nA new Minecraft Bedrock Preview is out now!"
+                    : "A new stable release of Minecraft Bedrock is out now!"
+            ),
+            author: {
+                name: "Minecraft Feedback",
+                url: (
+                    isPreview
+                        ? "https://feedback.minecraft.net/hc/en-us/sections/360001185332-Beta-and-Preview-Information-and-Changelogs"
+                        : "https://feedback.minecraft.net/hc/en-us/sections/360001186971-Release-Changelogs"
+                ),
+                icon_url: "https://cdn.discordapp.com/attachments/1071081145149689857/1071089941985112064/Mojang.png",
+            },
+            thumbnail: {
+                url: (
+                    isPreview
+                        ? "https://cdn.discordapp.com/attachments/1071081145149689857/1071088108898091139/mcpreview.png"
+                        : "https://cdn.discordapp.com/attachments/1071081145149689857/1071088108642258984/icon.png"
+                ),
+            },
+            image: {
+                url: image,
+            },
+			footer: {
+				text: "Posted on"
+			},
+            timestamp: article.updated_at,
+        }
+    );
+    
     axios.post(
         "https://discord.com/api/v10/channels/" + Config.forumsChannel + "/threads",
         {
@@ -166,42 +299,34 @@ function createForumPost(article, version, image, tag, isPreview = false) {
                         : "Release"
                 ),
             message: {
-                embeds: [
-                    {
-                        title: article.name,
-                        url: article.html_url,
-                        color: (
-                            isPreview 
-                                ? 16763904
-                                : 4652839
-                        ),
-                        description: (
-                            isPreview
-                                ? "It's that day of the week!\nA new Minecraft Bedrock Preview is out now!"
-                                : "A new stable release of Minecraft Bedrock is out now!"
-                        ),
-                        author: {
-                            name: "Minecraft Feedback",
-                                url: (
-                                    isPreview
-                                        ? "https://feedback.minecraft.net/hc/en-us/sections/360001185332-Beta-and-Preview-Information-and-Changelogs"
-                                        : "https://feedback.minecraft.net/hc/en-us/sections/360001186971-Release-Changelogs"
-                                ),
-                                icon_url: "https://cdn.discordapp.com/attachments/1071081145149689857/1071089941985112064/Mojang.png",
-                        },
-                        thumbnail: {
-                            url: (
-                                isPreview
-                                    ? "https://cdn.discordapp.com/attachments/1071081145149689857/1071088108898091139/mcpreview.png"
-                                    : "https://cdn.discordapp.com/attachments/1071081145149689857/1071088108642258984/icon.png"
-                            ),
-                        },
-                        image: {
-                            url: image,
-                        },
-                        timestamp: article.updated_at,
-                    },
-                ],
+                embeds,
+				components: [
+					{
+						type: 1,
+						components: [
+							{
+								type: 2,
+								style: 5,
+								label: "Changelog",
+								url: article.html_url,
+								emoji: {
+									id: "1090311574423609416",
+									name: "changelog",
+								},
+							},
+							{
+								type: 2,
+								style: 5,
+								label: "Feedback",
+								url: "https://feedback.minecraft.net/",
+								emoji: {
+									id: "1090311572024463380",
+									name: "feedback",
+								},
+							},
+						],
+					},
+				],
             },
             applied_tags: [
                 tag,
@@ -210,19 +335,30 @@ function createForumPost(article, version, image, tag, isPreview = false) {
         headers,
     )
     .then(
-        (response) => pinMessage(response)
+        ({ data: response }) => {
+            try {
+				pinMessage(response);
+				pingPoggy(response);
+			} catch(e) {}
+        },
     )
     .catch(
-        (e) => setTimeout(
-            () => createForumPost(article, version, image, tag, isPreview),
-            5000
-        )
+        (e) => {
+            console.log(e);
+            setTimeout(
+                () => createForumPost(article, version, image, tag, isPreview),
+                5000
+            );
+        },
     );
 };
 
 function pinMessage(response) {
     axios.put(
-        "https://discord.com/api/v10/channels/" + response.data.id + "/pins/" + response.data.message.id,
+        "https://discord.com/api/v10/channels/" +
+        response.id +
+        "/pins/" +
+        response.message.id,
         {},
         headers,
     )
@@ -234,5 +370,72 @@ function pinMessage(response) {
     );
 };
 
-console.log(`\x1B[33m\x1B[1mINFO | \x1B[37mStarting\n\x1B[0m`);
+const pings = [
+	"345885507420553217",
+	"588670754233516032",
+];
+
+function pingPoggy(response) {
+	axios.post(
+		"https://discord.com/api/v10/channels/"
+		+ response.id
+		+ "/messages",
+		{
+			content: (
+				"**Pings**:\n>>> "
+				+ pings.map(
+					(p) => "<@" + p + ">",
+				)
+				.join("\n")
+			),
+		},
+		headers,
+	).then(
+		({ data: r }) => {
+			console.log(
+				"\x1B[0m" +
+				new Date().toLocaleTimeString() +
+				" \x1B[32m\x1B[1m[SUCCESS] \x1B[0m- " +
+				"Successfully pinged Poggy!"
+			);
+			
+			axios.delete(
+				"https://discord.com/api/v10/channels/"
+				+ response.id
+				+ "/messages/"
+				+ r.id,
+				headers,
+			).then(
+				(re) => console.log(
+					"\x1B[0m" +
+					new Date().toLocaleTimeString() +
+					" \x1B[32m\x1B[1m[SUCCESS] \x1B[0m- " +
+					"SUccessfully deleted the ping message!"
+				),
+			).catch(
+				(e) => console.log(
+					"\x1B[0m" +
+					new Date().toLocaleTimeString() +
+					" \x1B[31m\x1B[1m[ERROR] \x1B[0m- " +
+					"Failed to delete the ping message :["
+				),
+			);
+		},
+	).catch(
+		(e) => console.log(
+			"\x1B[0m" +
+			new Date().toLocaleTimeString() +
+			" \x1B[31m\x1B[1m[ERROR] \x1B[0m- ",
+			"Failed to ping Poggy :["
+		),
+	);
+};
+
+console.log(
+    "\x1B[0m" +
+    new Date().toLocaleTimeString() +
+    " \x1B[33m\x1B[1m[INFO] \x1B[0m- ",
+    "Starting..."
+);
+
 checkForRelease();
