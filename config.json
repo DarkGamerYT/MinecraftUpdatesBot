@@ -1,0 +1,13 @@
+{
+    "repeateInterval": 60000,
+    "forums": {
+        "bedrock": "1103665220544639048",
+        "java": "1103665245391683696"
+    },
+    "tags": {
+        "Stable": "1103637008741576754",
+        "Preview": "1103637060134383616"
+    },
+    "bedrockDisabled": false,
+    "javaDisabled": true
+}

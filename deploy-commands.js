@@ -1,0 +1,43 @@
+const { REST, Routes } = require( "discord.js" );
+const fs = require( "node:fs" );
+const path = require( "node:path" );
+
+const commands = [];
+const foldersPath = path.join( __dirname, "commands" );
+const commandFolders = fs.readdirSync( foldersPath );
+
+for (const folder of commandFolders) {
+	const commandsPath = path.join( foldersPath, folder );
+	const commandFiles = fs.readdirSync( foldersPath ).filter((file) => file.endsWith( ".js" ));
+	const command = require( commandsPath );
+	if (
+        "data" in command
+        && "execute" in command
+    ) commands.push(command.data.toJSON());
+	else console.log(
+        "\x1B[0m" + new Date().toLocaleTimeString() + " \x1B[33m\x1B[1m[WARNING] \x1B[0m- The command at " + filePath + " is missing a required \"data\" or \"execute\" property."
+    );
+};
+
+const clientId = "1050730793221230652";
+const guildId = "566684196396072980";
+
+const rest = new REST().setToken( "MTA1MDczMDc5MzIyMTIzMDY1Mg.GSV3-a.3-zy3xWN9f8yQHuNxC1yPbTXFNFfYl_TaQBzNw" );
+(async () => {
+	try {
+        console.log(
+            "\x1B[0m" + new Date().toLocaleTimeString() + " \x1B[33m\x1B[1m[INFO] \x1B[0m- Started refreshing " + commands.length + " application (/) commands."
+        );
+
+		const data = await rest.put(
+			Routes.applicationGuildCommands( clientId, guildId ),
+			{ body: commands },
+		);
+
+        console.log(
+            "\x1B[0m" + new Date().toLocaleTimeString() + " \x1B[33m\x1B[1m[INFO] \x1B[0m- Successfully reloaded " + commands.length + " application (/) commands."
+        );
+	} catch (error) {
+		console.error(error);
+	};
+})();
