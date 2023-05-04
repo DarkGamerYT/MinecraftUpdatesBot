@@ -3,7 +3,7 @@ const fs = require( "node:fs" );
 const articleSections = {
 	BedrockPreview: 360001185332,
 	BedrockRelease: 360001186971,
-    JavaSnapshot: 360002267532,
+	JavaSnapshot: 360002267532,
 	JavaRelease: 360001186971,
 };
 

@@ -5,7 +5,7 @@ const Utils = require( "../utils.js" );
 const articleSections = {
 	BedrockPreview: 360001185332,
 	BedrockRelease: 360001186971,
-    JavaSnapshot: 360002267532,
+	JavaSnapshot: 360002267532,
 	JavaRelease: 360001186971,
 };
 
@@ -74,7 +74,10 @@ module.exports = class {
                                 );
 
                                 bedrockPreviews.push(Utils.formatArticle( latestBedrockPreview ));
-                            } else if (!bedrockReleases.find((a) => a.article.id == latestBedrockStable?.id)) {
+                                await new Promise((res) => setTimeout(() => res(), 1500));
+                            };
+                            
+                            if (!bedrockReleases.find((a) => a.article.id == latestBedrockStable?.id)) {
                                 const version = Utils.getVersion( latestBedrockStable.name );
                                 const thumbnail = Utils.extractImage( latestBedrockStable.body );
                                         
@@ -84,7 +87,10 @@ module.exports = class {
                                 );
 
                                 bedrockReleases.push(Utils.formatArticle( latestBedrockStable ));
-                            } else if (!javaSnapshots.find((a) => a.article.id == latestJavaSnapshot?.id)) {
+                                await new Promise((res) => setTimeout(() => res(), 1500));
+                            };
+                            
+                            if (!javaSnapshots.find((a) => a.article.id == latestJavaSnapshot?.id)) {
                                 const version = Utils.getVersion( latestJavaSnapshot.name );
                                 const thumbnail = Utils.extractImage( latestJavaSnapshot.body );
                                 
@@ -94,7 +100,10 @@ module.exports = class {
                                 );
                                 
                                 javaSnapshots.push(Utils.formatArticle( latestJavaSnapshot ));
-                            } else if (!javaReleases.find((a) => a.article.id == latestJavaStable?.id)) {
+                                await new Promise((res) => setTimeout(() => res(), 1500));
+                            };
+                            
+                            if (!javaReleases.find((a) => a.article.id == latestJavaStable?.id)) {
                                 const version = Utils.getVersion( latestJavaStable.name );
                                 const thumbnail = Utils.extractImage( latestJavaStable.body );
                                         
@@ -104,6 +113,7 @@ module.exports = class {
                                 );
                                 
                                 javaReleases.push(Utils.formatArticle( latestJavaStable ));
+                                await new Promise((res) => setTimeout(() => res(), 1500));
                             };
 
                             fs.writeFileSync( "./data/stable-articles.json", JSON.stringify( bedrockReleases.sort((a, b) => new Date(b.article.updated_at).getTime() - new Date(a.article.updated_at).getTime()), null, 4 ) );
