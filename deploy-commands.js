@@ -1,6 +1,7 @@
 const { REST, Routes } = require( "discord.js" );
 const fs = require( "node:fs" );
 const path = require( "node:path" );
+const Config = require( "./config.json" );
 
 const commands = [];
 const foldersPath = path.join( __dirname, "commands" );
@@ -19,10 +20,7 @@ for (const folder of commandFolders) {
     );
 };
 
-const clientId = "1050730793221230652";
-const guildId = "566684196396072980";
-
-const rest = new REST().setToken( "MTA1MDczMDc5MzIyMTIzMDY1Mg.GSV3-a.3-zy3xWN9f8yQHuNxC1yPbTXFNFfYl_TaQBzNw" );
+const rest = new REST().setToken( process.env.token );
 (async () => {
 	try {
         console.log(
@@ -30,7 +28,7 @@ const rest = new REST().setToken( "MTA1MDczMDc5MzIyMTIzMDY1Mg.GSV3-a.3-zy3xWN9f8
         );
 
 		const data = await rest.put(
-			Routes.applicationGuildCommands( clientId, guildId ),
+			Routes.applicationGuildCommands( Config.clientId, Config.guildId ),
 			{ body: commands },
 		);
 
