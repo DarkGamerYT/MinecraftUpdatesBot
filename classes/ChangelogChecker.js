@@ -1,5 +1,4 @@
 const fs = require( "node:fs" );
-const request = require( "request" );
 const Config = require( "../config.json" );
 const Utils = require( "../utils.js" );
 const articleSections = {
@@ -13,16 +12,19 @@ module.exports = class {
     constructor( client ) {
         setInterval(
             () => {
-                request(
+                fetch(
+                    "https://feedback.minecraft.net/api/v2/help_center/en-us/articles.json",
                     {
-                        url: "https://feedback.minecraft.net/api/v2/help_center/en-us/articles.json",
                         method: "GET",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
                     },
-                    async ( error, res, body ) => {
-                        if (error) return;
+                ).then(
+                    (res) => res.json(),
+                ).then(
+                    async (data) => {
                         try {
-                            const data = JSON.parse( body );
-
                             const latestBedrockPreview = data.articles.find((a) => a.section_id == articleSections.BedrockPreview);
                             const bedrockPreviews = await Utils.getSavedData(
                                 data.articles.filter(
@@ -64,52 +66,64 @@ module.exports = class {
                                 true,
                             );
                             
-                            if (!bedrockPreviews.find((a) => a.article.id == latestBedrockPreview?.id)) {
+                            if (
+								latestBedrockPreview
+								&& !bedrockPreviews.find((a) => a.article.id == latestBedrockPreview?.id)
+							) {
                                 const version = Utils.getVersion( latestBedrockPreview.name );
                                 const thumbnail = Utils.extractImage( latestBedrockPreview.body );
                                 
                                 createPost( client, latestBedrockPreview, version, thumbnail, Config.tags.Preview, articleSections.BedrockPreview, false );
                                 console.log(
-                                    "\n\x1B[0m" + new Date().toLocaleTimeString() + " \x1B[32m\x1B[1m[NEW RELEASE] \x1B[0m- ", latestBedrockPreview.name
+                                    "\n\x1B[0m" + new Date(latestBedrockPreview.updated_at).toLocaleTimeString() + " \x1B[32m\x1B[1m[NEW RELEASE] \x1B[0m- ", latestBedrockPreview.name
                                 );
-
+                                
                                 bedrockPreviews.push(Utils.formatArticle( latestBedrockPreview ));
                                 await new Promise((res) => setTimeout(() => res(), 1500));
                             };
                             
-                            if (!bedrockReleases.find((a) => a.article.id == latestBedrockStable?.id)) {
+                            if (
+								latestBedrockStable
+								&& !bedrockReleases.find((a) => a.article.id == latestBedrockStable?.id)
+							) {
                                 const version = Utils.getVersion( latestBedrockStable.name );
                                 const thumbnail = Utils.extractImage( latestBedrockStable.body );
                                         
                                 createPost( client, latestBedrockStable, version, thumbnail, Config.tags.Stable, articleSections.BedrockRelease, false );
                                 console.log(
-                                    "\n\x1B[0m" + new Date().toLocaleTimeString() + " \x1B[32m\x1B[1m[NEW RELEASE] \x1B[0m- ", latestBedrockStable.name
+                                    "\n\x1B[0m" + new Date(latestBedrockStable.updated_at).toLocaleTimeString() + " \x1B[32m\x1B[1m[NEW RELEASE] \x1B[0m- ", latestBedrockStable.name
                                 );
 
                                 bedrockReleases.push(Utils.formatArticle( latestBedrockStable ));
                                 await new Promise((res) => setTimeout(() => res(), 1500));
                             };
                             
-                            if (!javaSnapshots.find((a) => a.article.id == latestJavaSnapshot?.id)) {
+                            if (
+								latestJavaSnapshot
+								&& !javaSnapshots.find((a) => a.article.id == latestJavaSnapshot?.id)
+							) {
                                 const version = Utils.getVersion( latestJavaSnapshot.name );
                                 const thumbnail = Utils.extractImage( latestJavaSnapshot.body );
                                 
                                 createPost( client, latestJavaSnapshot, version, thumbnail, Config.tags.Preview, articleSections.JavaSnapshot, true );
                                 console.log(
-                                    "\n\x1B[0m" + new Date().toLocaleTimeString() + " \x1B[32m\x1B[1m[NEW RELEASE] \x1B[0m- ", latestJavaSnapshot.name
+                                    "\n\x1B[0m" + new Date(latestJavaSnapshot.updated_at).toLocaleTimeString() + " \x1B[32m\x1B[1m[NEW RELEASE] \x1B[0m- ", latestJavaSnapshot.name
                                 );
                                 
                                 javaSnapshots.push(Utils.formatArticle( latestJavaSnapshot ));
                                 await new Promise((res) => setTimeout(() => res(), 1500));
                             };
-                            
-                            if (!javaReleases.find((a) => a.article.id == latestJavaStable?.id)) {
+							
+                            if (
+								latestJavaStable
+								&& !javaReleases.find((a) => a.article.id == latestJavaStable?.id)
+							) {
                                 const version = Utils.getVersion( latestJavaStable.name );
                                 const thumbnail = Utils.extractImage( latestJavaStable.body );
                                         
                                 createPost( client, latestJavaStable, version, thumbnail, Config.tags.Stable, articleSections.JavaRelease, true );
                                 console.log(
-                                    "\n\x1B[0m" + new Date().toLocaleTimeString() + " \x1B[32m\x1B[1m[NEW RELEASE] \x1B[0m- ", latestJavaStable.name
+                                    "\n\x1B[0m" + new Date(latestJavaStable.updated_at).toLocaleTimeString() + " \x1B[32m\x1B[1m[NEW RELEASE] \x1B[0m- ", latestJavaStable.name
                                 );
                                 
                                 javaReleases.push(Utils.formatArticle( latestJavaStable ));
@@ -124,14 +138,14 @@ module.exports = class {
                             console.log(e);
                         };
                     },
-                );
+                ).catch(() => {});
             },
             Config.repeateInterval,
         );
     };
 };
 
-const createPost = async (
+const createPost = (
     client,
     article,
     version,
@@ -153,7 +167,7 @@ const createPost = async (
 
     const embed = Utils.createEmbed( article, thumbnail, articleSection, isJava );
     const forumChannel = client.channels.cache.get( !isJava ? Config.forums.bedrock : Config.forums.java );
-    const post = await forumChannel.threads.create(
+    forumChannel.threads.create(
         {
             name: (
                 version
@@ -177,36 +191,68 @@ const createPost = async (
                     embed,
                 ],
                 components: [
-					{
-						type: 1,
-						components: [
-							{
-								type: 2,
-								style: 5,
-								label: "Changelog",
-								url: article.html_url,
-								emoji: {
-									id: "1090311574423609416",
-									name: "changelog",
-								},
-							},
-							{
-								type: 2,
-								style: 5,
-								label: "Feedback",
-								url: "https://feedback.minecraft.net/",
-								emoji: {
-									id: "1090311572024463380",
-									name: "feedback",
-								},
-							},
-						],
-					},
-				],
+                    {
+                        type: 1,
+                        components: [
+                            {
+                                type: 2,
+                                style: 5,
+                                label: "Changelog",
+                                url: article.html_url,
+                                emoji: {
+                                    id: "1090311574423609416",
+                                    name: "changelog",
+                                },
+                            },
+                            {
+                                type: 2,
+                                style: 5,
+                                label: "Feedback",
+                                url: "https://feedback.minecraft.net/",
+                                emoji: {
+                                    id: "1090311572024463380",
+                                    name: "feedback",
+                                },
+                            },
+                        ],
+                    },
+                ],
             },
             appliedTags: [ tag ],
         },
+    ).then(
+        (post) => {
+            post.messages.cache.get( post.lastMessageId ).pin()
+            .then(
+                () => console.log(
+                    "\x1B[0m" + new Date().toLocaleTimeString() + " \x1B[32m\x1B[1m[SUCCESS] \x1B[0m- Successfully pinned the message for " + article.name
+                ),
+            ).catch(
+                () => {
+                    console.log(
+                        "\x1B[0m" + new Date().toLocaleTimeString() + " \x1B[31m\x1B[1m[ERROR] \x1B[0m- Failed to pin the message for " + article.name
+                    );
+
+                    post.send(
+                        {
+                            content: "> Failed to pin the message :[",
+                        },
+                    );
+                },
+            );
+        
+            Utils.ping( post );
+        },
+    ).catch(
+        () => {
+            console.log(
+                "\x1B[0m" + new Date().toLocaleTimeString() + " \x1B[33m\x1B[1m[INFO] \x1B[0m- Failed to create the forum post for " + article.name + ", retrying..."
+            );
+        
+            setTimeout(
+                () => createPost( client, article, version, thumbnail, tag, articleSection, isJava ),
+                5000,
+            );
+        },
     );
-    
-    await post.messages.cache.get( post.lastMessageId ).pin();
 };
