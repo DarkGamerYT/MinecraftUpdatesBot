@@ -75,7 +75,7 @@ module.exports = class {
                                 
                                 createPost( client, latestBedrockPreview, version, thumbnail, Config.tags.Preview, articleSections.BedrockPreview, false );
                                 console.log(
-                                    "\n\x1B[0m" + new Date(latestBedrockPreview.updated_at).toLocaleTimeString() + " \x1B[32m\x1B[1m[NEW RELEASE] \x1B[0m- ", latestBedrockPreview.name
+                                    "\n\x1B[0m" + new Date( latestBedrockPreview.updated_at ).toLocaleTimeString() + " \x1B[32m\x1B[1m[NEW RELEASE] \x1B[0m- ", latestBedrockPreview.name
                                 );
                                 
                                 bedrockPreviews.push(Utils.formatArticle( latestBedrockPreview ));
@@ -91,7 +91,7 @@ module.exports = class {
                                         
                                 createPost( client, latestBedrockStable, version, thumbnail, Config.tags.Stable, articleSections.BedrockRelease, false );
                                 console.log(
-                                    "\n\x1B[0m" + new Date(latestBedrockStable.updated_at).toLocaleTimeString() + " \x1B[32m\x1B[1m[NEW RELEASE] \x1B[0m- ", latestBedrockStable.name
+                                    "\n\x1B[0m" + new Date( latestBedrockStable.updated_at ).toLocaleTimeString() + " \x1B[32m\x1B[1m[NEW RELEASE] \x1B[0m- ", latestBedrockStable.name
                                 );
 
                                 bedrockReleases.push(Utils.formatArticle( latestBedrockStable ));
@@ -107,7 +107,7 @@ module.exports = class {
                                 
                                 createPost( client, latestJavaSnapshot, version, thumbnail, Config.tags.Preview, articleSections.JavaSnapshot, true );
                                 console.log(
-                                    "\n\x1B[0m" + new Date(latestJavaSnapshot.updated_at).toLocaleTimeString() + " \x1B[32m\x1B[1m[NEW RELEASE] \x1B[0m- ", latestJavaSnapshot.name
+                                    "\n\x1B[0m" + new Date( latestJavaSnapshot.updated_at ).toLocaleTimeString() + " \x1B[32m\x1B[1m[NEW RELEASE] \x1B[0m- ", latestJavaSnapshot.name
                                 );
                                 
                                 javaSnapshots.push(Utils.formatArticle( latestJavaSnapshot ));
@@ -123,7 +123,7 @@ module.exports = class {
                                         
                                 createPost( client, latestJavaStable, version, thumbnail, Config.tags.Stable, articleSections.JavaRelease, true );
                                 console.log(
-                                    "\n\x1B[0m" + new Date(latestJavaStable.updated_at).toLocaleTimeString() + " \x1B[32m\x1B[1m[NEW RELEASE] \x1B[0m- ", latestJavaStable.name
+                                    "\n\x1B[0m" + new Date( latestJavaStable.updated_at ).toLocaleTimeString() + " \x1B[32m\x1B[1m[NEW RELEASE] \x1B[0m- ", latestJavaStable.name
                                 );
                                 
                                 javaReleases.push(Utils.formatArticle( latestJavaStable ));

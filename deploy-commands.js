@@ -2,6 +2,7 @@ const { REST, Routes } = require( "discord.js" );
 const fs = require( "node:fs" );
 const path = require( "node:path" );
 const Config = require( "./config.json" );
+require( "dotenv" ).config();
 
 const commands = [];
 const foldersPath = path.join( __dirname, "commands" );
@@ -14,8 +15,9 @@ for (const folder of commandFolders) {
 	if (
         "data" in command
         && "execute" in command
-    ) commands.push(command.data.toJSON());
-	else console.log(
+    ) {
+		if(!command.disabled) commands.push(command.data.toJSON());
+	} else console.log(
         "\x1B[0m" + new Date().toLocaleTimeString() + " \x1B[33m\x1B[1m[WARNING] \x1B[0m- The command at " + filePath + " is missing a required \"data\" or \"execute\" property."
     );
 };
@@ -28,7 +30,8 @@ const rest = new REST().setToken( process.env.token );
         );
 
 		const data = await rest.put(
-			Routes.applicationGuildCommands( Config.clientId, Config.guildId ),
+			Routes.applicationCommands( Config.clientId ),
+			//Routes.applicationGuildCommands( Config.clientId, Config.guildId ),
 			{ body: commands },
 		);
 

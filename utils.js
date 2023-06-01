@@ -53,7 +53,7 @@ module.exports = {
             
             return data;
         } else {
-            const savedData = JSON.parse(
+            return JSON.parse(
                 fs.readFileSync(
                     "./data/"
                     + (
@@ -72,8 +72,6 @@ module.exports = {
                     + ".json"
                 ),
             );
-            
-            return savedData;
         };
     },
     formatArticle: ( a ) => {
@@ -190,5 +188,40 @@ module.exports = {
 			},
 			timestamp: article.updated_at,
 		};
+    },
+    ping: ( channel ) => {
+        const pings = JSON.parse(fs.readFileSync( "./pings.json" ));
+        channel.send(
+            {
+                content: (
+                    pings.map(
+                        (p) => "<@" + p + ">",
+                    )
+                    .join(", ")
+                ),
+            },
+        )
+        .then(
+            (msg) => {
+                console.log(
+                    "\x1B[0m" + new Date().toLocaleTimeString() + " \x1B[32m\x1B[1m[SUCCESS] \x1B[0m- Successfully pinged Poggy!"
+                );
+
+                msg.delete()
+                .then(
+                    () => console.log(
+                        "\x1B[0m" + new Date().toLocaleTimeString() + " \x1B[32m\x1B[1m[SUCCESS] \x1B[0m- SUccessfully deleted the ping message!"
+                    ),
+                ).catch(
+                    (e) => console.log(
+                        "\x1B[0m" + new Date().toLocaleTimeString() + " \x1B[31m\x1B[1m[ERROR] \x1B[0m- Failed to delete the ping message :["
+                    ),
+                );
+            },
+        ).catch(
+            () => console.log(
+                "\x1B[0m" + new Date().toLocaleTimeString() + " \x1B[31m\x1B[1m[ERROR] \x1B[0m- Failed to ping Poggy :["
+            ),
+        );
     },
 };
