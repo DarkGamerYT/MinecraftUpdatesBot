@@ -1,0 +1,38 @@
+[
+    {
+        "version": "1.20 (Trails & Tales) ",
+        "thumbnail": null,
+        "article": {
+            "id": 16499677456781,
+            "url": "https://feedback.minecraft.net/hc/en-us/articles/16499677456781-Minecraft-Java-Edition-1-20-Trails-Tales-",
+            "title": "Minecraft: Java Edition - 1.20 (Trails & Tales) ",
+            "created_at": "2023-06-07T15:05:28Z",
+            "updated_at": "2023-06-07T15:06:55Z",
+            "edited_at": "2023-06-07T15:06:55Z"
+        }
+    },
+    {
+        "version": "1.19.4",
+        "thumbnail": null,
+        "article": {
+            "id": 13987663727757,
+            "url": "https://feedback.minecraft.net/hc/en-us/articles/13987663727757-Minecraft-Java-Edition-1-19-4",
+            "title": "Minecraft: Java Edition - 1.19.4",
+            "created_at": "2023-03-14T16:13:27Z",
+            "updated_at": "2023-03-14T16:13:30Z",
+            "edited_at": "2023-03-14T16:13:30Z"
+        }
+    },
+    {
+        "version": "1.19.3",
+        "thumbnail": null,
+        "article": {
+            "id": 11280166737293,
+            "url": "https://feedback.minecraft.net/hc/en-us/articles/11280166737293-Minecraft-Java-Edition-1-19-3",
+            "title": "Minecraft: Java Edition - 1.19.3",
+            "created_at": "2022-12-08T08:12:40Z",
+            "updated_at": "2022-12-08T08:12:44Z",
+            "edited_at": "2022-12-08T08:12:44Z"
+        }
+    }
+]

@@ -1,0 +1,15 @@
+{
+    "clientId": "1071064146843533342",
+    "guildId": "523663022053392405",
+    "repeateInterval": 60000,
+    "forums": {
+        "bedrock": "1019665690233405500",
+        "java": "1103665245391683696"
+    },
+    "tags": {
+        "Stable": "1019665978369507480",
+        "Preview": "1019666001987653673"
+    },
+    "bedrockDisabled": false,
+    "javaDisabled": true
+}
