@@ -3,8 +3,6 @@ const Utils = require( "./utils.js" );
 const articleSections = {
 	BedrockPreview: 360001185332,
 	BedrockRelease: 360001186971,
-	JavaSnapshot: 360002267532,
-	JavaRelease: 360001186971,
 };
 
 const saveChangelogs = () => {
@@ -12,9 +10,7 @@ const saveChangelogs = () => {
 		"https://feedback.minecraft.net/api/v2/help_center/en-us/articles.json?per_page=100",
 		{
 			method: "GET",
-			headers: {
-				"Content-Type": "application/json",
-			},
+			headers: { "Content-Type": "application/json" },
 		},
 	).then((res) => res.json())
 	.then(
@@ -30,18 +26,6 @@ const saveChangelogs = () => {
 				(a) => a.section_id == articleSections.BedrockPreview
 			).map( Utils.formatArticle );
 			fs.writeFileSync( __dirname + "/data/preview-articles.json", JSON.stringify( previewArticles, null, 4 ) );
-
-			const javaStableArticles = data.articles.filter(
-				(a) =>
-					a.section_id == articleSections.JavaRelease
-					&& a.title.includes( "Java Edition" )
-			).map( Utils.formatArticle );
-			fs.writeFileSync( __dirname + "/data/java-stable-articles.json", JSON.stringify( javaStableArticles, null, 4 ) );
-
-			const snapshotArticles = data.articles.filter(
-				(a) => a.section_id == articleSections.JavaSnapshot
-			).map( Utils.formatArticle );
-			fs.writeFileSync( __dirname + "/data/snapshot-articles.json", JSON.stringify( snapshotArticles, null, 4 ) );
 		},
 	);
 };

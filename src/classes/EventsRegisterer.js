@@ -11,4 +11,4 @@ module.exports = class {
             else client.on(event.name, (...args) => event.execute(...args));
         };
     };
-}
+};

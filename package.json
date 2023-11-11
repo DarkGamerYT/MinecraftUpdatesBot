@@ -1,4 +1,6 @@
 {
+  "version": "1.0.2",
+  "main": "index.js",
   "scripts": {
     "start": "node index.js",
     "save-changelogs": "node src/changelogs.js"
