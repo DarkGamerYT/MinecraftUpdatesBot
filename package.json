@@ -1,13 +1,13 @@
 {
-  "version": "1.0.2",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js",
-    "save-changelogs": "node src/changelogs.js"
-  },
-  "dependencies": {
-    "discord.js": "^14.10.2",
-    "dotenv": "^16.0.3",
-    "node-html-parser": "^6.1.5"
-  }
+    "version": "1.0.2",
+    "main": "index.js",
+    "scripts": {
+        "start": "node index.js",
+        "save-changelogs": "node src/changelogs.js"
+    },
+    "dependencies": {
+        "discord.js": "^14.10.2",
+        "dotenv": "^16.0.3",
+        "node-html-parser": "^6.1.5"
+    }
 }

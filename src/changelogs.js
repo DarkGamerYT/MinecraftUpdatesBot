@@ -31,6 +31,4 @@ const saveChangelogs = () => {
 };
 
 saveChangelogs();
-console.log(
-	"\x1B[0m" + new Date().toLocaleTimeString() + " \x1B[33m\x1B[1m[INFO] \x1B[0m- Saving changelogs..."
-);
+Utils.Logger.log( "Saving changelogs" );

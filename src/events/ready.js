@@ -5,7 +5,7 @@ module.exports = {
 	name: Events.ClientReady,
 	once: true,
 	execute( client ) {
-		Utils.Logger.log("Logged in as: " + client.user.tag);
+		Utils.Logger.log( "Logged in as: " + client.user.tag );
 		new ChangelogChecker( client );
 	},
 };

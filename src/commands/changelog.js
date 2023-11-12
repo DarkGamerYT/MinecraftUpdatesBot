@@ -4,7 +4,7 @@ const stableArticles = JSON.parse(fs.readFileSync( __dirname + "/../data/stable-
 const previewArticles = JSON.parse(fs.readFileSync( __dirname + "/../data/preview-articles.json" )).filter((a, index) => index < 25);
 module.exports = {
     disabled: true,
-	data: (
+    data: (
         new SlashCommandBuilder()
         .setName( "changelog" )
         .setDescription( "Returns the changelog of a certain Minecraft version" )
@@ -30,7 +30,7 @@ module.exports = {
         )
     ),
 
-	async execute( interaction ) {
+    async execute( interaction ) {
         try {
             const version = interaction.options.getString( "version" );
             const isPreview = ( interaction.options.getSubcommand() == "preview" );
@@ -91,5 +91,5 @@ module.exports = {
                 },
             );
         } catch(e) {};
-	},
+    },
 };
