@@ -5,57 +5,34 @@ const articleSections = {
     BedrockRelease: 360001186971,
 };
 
+const formatDate = (d = Date.now()) => {
+    const date = new Date(d);
+    const [ month, day, year ] = date.toLocaleDateString().split("/");
+    const time = date.toLocaleTimeString();
+    return (`${year}-${month}-${day} ${time}`);
+};
+
 const Logger = {
-    log: (...data) => {
-        const date = new Date();
-        const [ month, day, year ] = date.toLocaleDateString().split("/");
-        const time = date.toLocaleTimeString();
-            
-        console.log(
-            "\x1B[0m[" + `${year}-${month}-${day}`, time + "] \x1B[33m\x1B[1m[INFO] \x1B[0m-",
-            ...data,
-        );
-    },
-    warn: (...data) => {
-        const date = new Date();
-        const [ month, day, year ] = date.toLocaleDateString().split("/");
-        const time = date.toLocaleTimeString();
-            
-        console.log(
-            "\x1B[0m[" + `${year}-${month}-${day}`, time + "] \x1B[33m\x1B[1m[WARNING] \x1B[0m-",
-            ...data,
-        );
-    },
-    success: (...data) => {
-        const date = new Date();
-        const [ month, day, year ] = date.toLocaleDateString().split("/");
-        const time = date.toLocaleTimeString();
-            
-        console.log(
-            "\x1B[0m[" + `${year}-${month}-${day}`, time + "] \x1B[32m\x1B[1m[SUCCESS] \x1B[0m-",
-            ...data,
-        );
-    },
-    release: (releaseDate, ...data) => {
-        const date = new Date(releaseDate);
-        const [ month, day, year ] = date.toLocaleDateString().split("/");
-        const time = date.toLocaleTimeString();
-            
-        console.log(
-            "\x1B[0m[" + `${year}-${month}-${day}`, time + "] \x1B[32m\x1B[1m[NEW RELEASE] \x1B[0m-",
-            ...data,
-        );
-    },
-    error: (...data) => {
-        const date = new Date();
-        const [ month, day, year ] = date.toLocaleDateString().split("/");
-        const time = date.toLocaleTimeString();
-            
-        console.log(
-            "\x1B[0m[" + `${year}-${month}-${day}`, time + "] \x1B[31m\x1B[1m[ERROR] \x1B[0m-",
-            ...data,
-        );
-    },
+    log: (...data) => console.log(
+        "\x1B[0m[" + formatDate() + "] \x1B[33m\x1B[1m[INFO] \x1B[0m-",
+        ...data,
+    ),
+    warn: (...data) => console.log(
+        "\x1B[0m[" + formatDate() + "] \x1B[33m\x1B[1m[WARNING] \x1B[0m-",
+        ...data,
+    ),
+    success: (...data) => console.log(
+        "\x1B[0m[" + formatDate() + "] \x1B[32m\x1B[1m[SUCCESS] \x1B[0m-",
+        ...data,
+    ),
+    release: (releaseDate, ...data) => console.log(
+        "\x1B[0m[" + formatDate(releaseDate) + "] \x1B[32m\x1B[1m[NEW RELEASE] \x1B[0m-",
+        ...data,
+    ),
+    error: (...data) => console.log(
+        "\x1B[0m[" + formatDate() + "] \x1B[31m\x1B[1m[ERROR] \x1B[0m-",
+        ...data,
+    ),
 };
 
 const Utils = {
@@ -215,8 +192,8 @@ const Utils = {
                     ))
                 )[0];
                 if (
-                    getStoreVersion( body.innerText, isPreview )
-                    .startsWith(version.replaceAll( ".", "" ))
+                    getStoreVersion(body.innerText, isPreview)
+                    .startsWith(version)
                 ) {
                     post.send({
                         content: (
@@ -281,10 +258,7 @@ const Utils = {
         .then(
             async (data) => {
                 const bdsVersion = isPreview ? data.linux.preview : data.linux.stable;
-                if (
-                    getStoreVersion( bdsVersion, isPreview )
-                    .startsWith(version.replaceAll( ".", "" ))
-                ) {
+                if (bdsVersion.startsWith(version)) {
                     post.send({
                         content: (
                             "> Bedrock Dedicated Server for **"
@@ -335,18 +309,18 @@ const Utils = {
 const getStoreVersion = (
     text,
     isPreview = false,
-) => (
-    text.replace( "Microsoft.", "" )
-    .replace( (isPreview ? "MinecraftWindowsBeta" : "MinecraftUWP"), "" )
-    .replace( "__8wekyb3d8bbwe", "" )
-    .replace( "x64", "" )
-    .replace( "x86", "" )
-    .replace( "arm", "" )
-    .replace( "arm64", "" )
-    .replace( ".BlockMap", "" )
-    .replace( ".appx", "" )
-    .replaceAll( "_", "" )
-    .replaceAll( ".", "" )
-);
+) => {
+    const regex = new RegExp(
+        /(\d+)\.(\d+)\.(\d{2})(\d{2})/,
+        "gm",
+    );
+
+    const [ , major, minor, build, beta ] = regex.exec(text);
+    return (
+        isPreview
+        ? (`${major}.${minor}.${build}.${beta}`)
+        : (`${major}.${minor}.${build}`)
+    );
+};
 
 module.exports = Utils;

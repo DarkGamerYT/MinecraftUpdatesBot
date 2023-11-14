@@ -67,6 +67,8 @@ module.exports = class {
                             const thumbnail = Utils.extractImage( latestBedrockStable.body );
                             const isHotfix = (
                                 latestBedrockStable.body.includes( "A new update has been released to address some issues that were introduced" )
+                                || latestBedrockStable.body.includes( "A new update has been released for" )
+                                || (latestBedrockStable.body.includes( "A new update has been released for" ) && latestBedrockStable.body.includes( "only to address a top crash" ))
                             );
 
                             Utils.Logger.release(latestBedrockStable.updated_at, latestBedrockStable.name);
