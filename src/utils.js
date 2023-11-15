@@ -225,6 +225,7 @@ const Utils = {
                     }).then(
                         (message) => {
                             message.pin();
+                            Utils.ping(post);
                             Logger.success(
                                 ( isPreview ? "Minecraft Preview" : "Minecraft" )
                                 + " v" + version + " is out now on the Microsoft Store!"
