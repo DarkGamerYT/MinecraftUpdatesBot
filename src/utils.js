@@ -104,12 +104,11 @@ const Utils = {
     }),
     createEmbed: (
         article,
-        articleName,
         image,
         articleSection,
     ) => {
         return {
-            title: articleName,
+            title: article.article.title,
             url: article.article.url,
             color: (
                 articleSection == articleSections.BedrockPreview

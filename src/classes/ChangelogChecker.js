@@ -40,7 +40,7 @@ module.exports = class {
                             
                             Utils.Logger.release(latestBedrockPreview.updated_at, latestBedrockPreview.name);
                             createPost(
-                                client, article, name, latestBedrockPreview.name,
+                                client, article, name,
                                 version, thumbnail, Config.tags.Preview,
                                 articleSections.BedrockPreview
                             );
@@ -78,7 +78,7 @@ module.exports = class {
 
                             Utils.Logger.release(latestBedrockStable.updated_at, latestBedrockStable.name);
                             createPost(
-                                client, article, name, latestBedrockStable.name,
+                                client, article, name,
                                 version, thumbnail, Config.tags.Stable,
                                 articleSections.BedrockRelease, isHotfix
                             );
@@ -107,11 +107,11 @@ module.exports = class {
  * @param { boolean } isHotfix
  */
 const createPost = (
-    client, article, name, articleName,
+    client, article, name,
     version, thumbnail, tag,
     articleSection, isHotfix = false,
 ) => {
-    const embed = Utils.createEmbed( article, articleName, thumbnail, articleSection );
+    const embed = Utils.createEmbed( article, thumbnail, articleSection );
     const forumChannel = client.channels.cache.get(Config.channel);
     forumChannel.threads.create({
         name: (
