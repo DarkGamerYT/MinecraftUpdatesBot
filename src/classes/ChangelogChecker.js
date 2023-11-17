@@ -33,18 +33,19 @@ module.exports = class {
                             latestBedrockPreview
                             && !bedrockPreviews.find((a) => a.article.id == latestBedrockPreview?.id)
                         ) {
+                            const article = Utils.formatArticle(latestBedrockPreview);
                             const name = Utils.getVersion( latestBedrockPreview.name );
                             const version = Utils.getMCVersion( latestBedrockPreview.name );
                             const thumbnail = Utils.extractImage( latestBedrockPreview.body );
                             
                             Utils.Logger.release(latestBedrockPreview.updated_at, latestBedrockPreview.name);
                             createPost(
-                                client, latestBedrockPreview, name,
+                                client, article, name, latestBedrockPreview.name,
                                 version, thumbnail, Config.tags.Preview,
                                 articleSections.BedrockPreview
                             );
                                 
-                            bedrockPreviews.push(Utils.formatArticle( latestBedrockPreview ));
+                            bedrockPreviews.push(article);
                             await new Promise((res) => setTimeout( () => res(), 1500 ));
                         };
 
@@ -65,8 +66,9 @@ module.exports = class {
                             latestBedrockStable
                             && !bedrockReleases.find((a) => a.article.id == latestBedrockStable?.id)
                         ) {
-                            const name = Utils.getVersion( latestBedrockPreview.name );
-                            const version = Utils.getMCVersion( latestBedrockPreview.name );
+                            const article = Utils.formatArticle(latestBedrockStable);
+                            const name = Utils.getVersion( latestBedrockStable.name );
+                            const version = Utils.getMCVersion( latestBedrockStable.name );
                             const thumbnail = Utils.extractImage( latestBedrockStable.body );
                             const isHotfix = (
                                 latestBedrockStable.body.includes( "A new update has been released to address some issues that were introduced" )
@@ -76,12 +78,12 @@ module.exports = class {
 
                             Utils.Logger.release(latestBedrockStable.updated_at, latestBedrockStable.name);
                             createPost(
-                                client, latestBedrockStable, name,
+                                client, article, name, latestBedrockStable.name,
                                 version, thumbnail, Config.tags.Stable,
                                 articleSections.BedrockRelease, isHotfix
                             );
 
-                            bedrockReleases.push(Utils.formatArticle( latestBedrockStable ));
+                            bedrockReleases.push(Utils.formatArticle( article ));
                             await new Promise((res) => setTimeout( () => res(), 1500 ));
                         };
 
@@ -105,55 +107,53 @@ module.exports = class {
  * @param { boolean } isHotfix
  */
 const createPost = (
-    client, article, name,
+    client, article, name, articleName,
     version, thumbnail, tag,
     articleSection, isHotfix = false,
 ) => {
-    const embed = Utils.createEmbed( article, thumbnail, articleSection );
+    const embed = Utils.createEmbed( article, articleName, thumbnail, articleSection );
     const forumChannel = client.channels.cache.get(Config.channel);
-    forumChannel.threads.create(
-        {
-            name: (
-                name + " - "
-                + (
-                    articleSection == articleSections.BedrockPreview
-                    ? "Preview"
-                    : ( isHotfix ? "Hotfix" : "Stable" )
-                )
-            ),
-            appliedTags: [ tag ],
-            message: {
-                embeds: [ embed ],
-                components: [
-                    {
-                        type: 1,
-                        components: [
-                            {
-                                type: 2,
-                                style: 5,
-                                label: "Changelog",
-                                url: article.html_url,
-                                emoji: {
-                                    id: "1090311574423609416",
-                                    name: "changelog",
-                                },
+    forumChannel.threads.create({
+        name: (
+            name + " - "
+            + (
+                articleSection == articleSections.BedrockPreview
+                ? "Preview"
+                : ( isHotfix ? "Hotfix" : "Stable" )
+            )
+        ),
+        appliedTags: [ tag ],
+        message: {
+            embeds: [ embed ],
+            components: [
+                {
+                    type: 1,
+                    components: [
+                        {
+                            type: 2,
+                            style: 5,
+                            label: "Changelog",
+                            url: article.article.url,
+                            emoji: {
+                                id: "1090311574423609416",
+                                name: "changelog",
                             },
-                            {
-                                type: 2,
-                                style: 5,
-                                label: "Feedback",
-                                url: "https://feedback.minecraft.net/",
-                                emoji: {
-                                    id: "1090311572024463380",
-                                    name: "feedback",
-                                },
+                        },
+                        {
+                            type: 2,
+                            style: 5,
+                            label: "Feedback",
+                            url: "https://feedback.minecraft.net/",
+                            emoji: {
+                                id: "1090311572024463380",
+                                name: "feedback",
                             },
-                        ],
-                    },
-                ],
-            },
+                        },
+                    ],
+                },
+            ],
         },
-    ).then(
+    }).then(
         (post) => {
             post.messages.cache.get( post.lastMessageId ).react(
                 articleSection == articleSections.BedrockPreview
@@ -162,21 +162,22 @@ const createPost = (
             );
 
             post.messages.cache.get( post.lastMessageId ).pin()
-            .then(() => Utils.Logger.success( "Successfully pinned the message for", article.name ))
+            .then(() => Utils.Logger.success( "Successfully pinned the message for", article.version ))
             .catch(
                 () => {
-                    Utils.Logger.error( "Failed to pin the message for", article.name );
+                    Utils.Logger.error( "Failed to pin the message for", article.version );
                     post.send({ content: "> Failed to pin the message :<" });
                 },
             );
         
             Utils.ping( post );
             Utils.storeCheck( post, version, articleSection );
+            Utils.bdsCheck( post, version, articleSection );
         },
     ).catch(
         (e) => {
             console.log(e);
-            Utils.Logger.log( "Failed to create the forum post for", article.name + ", retrying..." );
+            Utils.Logger.log( "Failed to create the forum post for", "v" + article.version + ", retrying..." );
             setTimeout(
                 () => createPost(
                     client, article, name,

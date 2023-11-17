@@ -95,7 +95,7 @@ const Utils = {
         thumbnail: Utils.extractImage(a.body),
         article: {
             id: a.id,
-            url: a.html_url,
+            url: "https://feedback.minecraft.net/hc/en-us/articles/" + a.id,
             title: a.title,
             created_at: a.created_at,
             updated_at: a.updated_at,
@@ -104,12 +104,13 @@ const Utils = {
     }),
     createEmbed: (
         article,
+        articleName,
         image,
         articleSection,
     ) => {
         return {
-            title: article.name,
-            url: article.html_url,
+            title: articleName,
+            url: article.article.url,
             color: (
                 articleSection == articleSections.BedrockPreview
                 ? 16763904
@@ -142,7 +143,7 @@ const Utils = {
             },
             image: { url: image },
             footer: { text: "Posted on" },
-            timestamp: article.updated_at,
+            timestamp: article.article.updated_at,
         };
     },
     ping: ( channel ) => {
@@ -241,8 +242,6 @@ const Utils = {
                                 ( isPreview ? "Minecraft Preview" : "Minecraft" )
                                 + " v" + version + " is out now on the Microsoft Store!"
                             );
-                            
-                            Utils.bdsCheck( post, version, articleSection );
                         },
                     ).catch(
                         () => Logger.error(
