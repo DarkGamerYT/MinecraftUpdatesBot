@@ -1,26 +1,14 @@
 const { Events } = require( "discord.js" );
+const { InteractionHandler } = require( "../classes/InteractionHandler.js" );
+const interactionHandler = new InteractionHandler();
 module.exports = {
-    name: Events.InteractionCreate,
-    once: false,
-    async execute( interaction ) {
-        if (!interaction.isChatInputCommand()) return;
-        const command = interaction.client.commands.get( interaction.commandName );
-        if (!command) return;
+	name: Events.InteractionCreate,
+	once: false,
 
-        try {
-            await command.execute( interaction );
-        } catch (error) {
-            console.error( error );
-            if (
-                interaction.replied
-                || interaction.deferred
-            ) await interaction.followUp({
-                content: "There was an error while executing this command!",
-                ephemeral: true,
-            }); else await interaction.reply({
-                content: "There was an error while executing this command!",
-                ephemeral: true,
-            });
-        };
-    },
+    /** @param { import("discord.js").Interaction } interaction */
+	async execute( client, interaction ) {
+		if (interaction.isCommand()) interactionHandler.handleSlashcommands(client, interaction);
+        else if (interaction.isAutocomplete()) interactionHandler.handleAutocomplete(client, interaction);
+		else if (interaction.isModalSubmit()) interactionHandler.handleModals(client, interaction);
+	},
 };

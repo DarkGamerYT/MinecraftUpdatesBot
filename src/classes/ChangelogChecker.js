@@ -8,6 +8,7 @@ const articleSections = {
 };
 
 module.exports = class {
+    /** @param { import("discord.js").Client } client */
     constructor( client ) {
         setInterval(() => {
             fetch(
@@ -32,13 +33,14 @@ module.exports = class {
                             latestBedrockPreview
                             && !bedrockPreviews.find((a) => a.article.id == latestBedrockPreview?.id)
                         ) {
-                            const version = Utils.getVersion( latestBedrockPreview.name );
+                            const name = Utils.getVersion( latestBedrockPreview.name );
+                            const version = Utils.getMCVersion( latestBedrockPreview.name );
                             const thumbnail = Utils.extractImage( latestBedrockPreview.body );
                             
                             Utils.Logger.release(latestBedrockPreview.updated_at, latestBedrockPreview.name);
                             createPost(
-                                client, latestBedrockPreview, version, 
-                                thumbnail, Config.tags.Preview,
+                                client, latestBedrockPreview, name,
+                                version, thumbnail, Config.tags.Preview,
                                 articleSections.BedrockPreview
                             );
                                 
@@ -63,7 +65,8 @@ module.exports = class {
                             latestBedrockStable
                             && !bedrockReleases.find((a) => a.article.id == latestBedrockStable?.id)
                         ) {
-                            const version = Utils.getVersion( latestBedrockStable.name );
+                            const name = Utils.getVersion( latestBedrockPreview.name );
+                            const version = Utils.getMCVersion( latestBedrockPreview.name );
                             const thumbnail = Utils.extractImage( latestBedrockStable.body );
                             const isHotfix = (
                                 latestBedrockStable.body.includes( "A new update has been released to address some issues that were introduced" )
@@ -73,8 +76,8 @@ module.exports = class {
 
                             Utils.Logger.release(latestBedrockStable.updated_at, latestBedrockStable.name);
                             createPost(
-                                client, latestBedrockStable, version,
-                                thumbnail, Config.tags.Stable,
+                                client, latestBedrockStable, name,
+                                version, thumbnail, Config.tags.Stable,
                                 articleSections.BedrockRelease, isHotfix
                             );
 
@@ -91,17 +94,27 @@ module.exports = class {
     };
 };
 
+/**
+ * @param { import("discord.js").Client } client
+ * @param {{ version: string, thumbnail: string, article: { id: number, url: string, title: string, created_at: string, updated_at: string, edited_at: string } }} article
+ * @param { string } name
+ * @param { string } version
+ * @param { string } thumbnail
+ * @param { string } tag
+ * @param { number } articleSection
+ * @param { boolean } isHotfix
+ */
 const createPost = (
-    client, article, version,
-    thumbnail, tag, articleSection,
-    isHotfix = false,
+    client, article, name,
+    version, thumbnail, tag,
+    articleSection, isHotfix = false,
 ) => {
     const embed = Utils.createEmbed( article, thumbnail, articleSection );
     const forumChannel = client.channels.cache.get(Config.channel);
     forumChannel.threads.create(
         {
             name: (
-                version + " - "
+                name + " - "
                 + (
                     articleSection == articleSections.BedrockPreview
                     ? "Preview"
@@ -166,8 +179,9 @@ const createPost = (
             Utils.Logger.log( "Failed to create the forum post for", article.name + ", retrying..." );
             setTimeout(
                 () => createPost(
-                    client, article, version,
-                    thumbnail, tag, articleSection
+                    client, article, name,
+                    version, thumbnail, tag,
+                    articleSection, isHotfix
                 ), 5000,
             );
         },

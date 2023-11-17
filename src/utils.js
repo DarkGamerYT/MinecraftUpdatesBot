@@ -69,6 +69,17 @@ const Utils = {
         .replace( "Minecraft - ", "" )
         .replace( " (Bedrock)", "" )
     ),
+    getMCVersion: ( v ) => {
+        try {
+            const [ title, version, _, platform ] = new RegExp(
+                "Minecraft.* -\\s*([\\.0-9/]*)( \\((.*)\\))?",
+                "gm",
+            ).exec(v);
+            return version;
+        } catch {
+            return Utils.getVersion(v);
+        };
+    },
     extractImage: ( body ) => {
         const parsed = htmlParser.parse( body );
         const imageSrc = parsed.getElementsByTagName( "img" )[0]?.getAttribute( "src" );
@@ -80,7 +91,7 @@ const Utils = {
         return image;
     },
     formatArticle: ( a ) => ({
-        version: Utils.getVersion(a.name),
+        version: Utils.getMCVersion(a.name),
         thumbnail: Utils.extractImage(a.body),
         article: {
             id: a.id,

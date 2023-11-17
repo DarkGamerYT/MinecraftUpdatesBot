@@ -1,7 +1,5 @@
 const { SlashCommandBuilder } = require( "discord.js" );
 const fs = require( "node:fs" );
-const stableArticles = JSON.parse(fs.readFileSync( __dirname + "/../data/stable-articles.json" )).filter((a, index) => index < 25);
-const previewArticles = JSON.parse(fs.readFileSync( __dirname + "/../data/preview-articles.json" )).filter((a, index) => index < 25);
 module.exports = {
     disabled: true,
     data: (
@@ -15,7 +13,7 @@ module.exports = {
                 .setName( "version" )
                 .setDescription( "Minecraft Version" )
                 .setRequired( true )
-                .addChoices( ...stableArticles.map((a) => ({ name: a.version, value: a.version })) ),
+                .setAutocomplete(true)
             ),
         )
         .addSubcommand((subcommand) => subcommand
@@ -25,12 +23,37 @@ module.exports = {
                 .setName( "version" )
                 .setDescription( "Minecraft Version" )
                 .setRequired( true )
-                .addChoices( ...previewArticles.map((a) => ({ name: a.version, value: a.version })) ),
+                .setAutocomplete(true)
             ),
         )
     ),
+    /**
+     * @param { import("discord.js").Client } client
+     * @param { import("discord.js").Interaction } interaction
+     */
+    autocomplete: async ( client, interaction ) => {
+        const focusedValue = interaction.options.getFocused().toLowerCase();
+        const isPreview = ( interaction.options.getSubcommand() == "preview" );
+        const articles = JSON.parse(
+            fs.readFileSync(
+                __dirname + `/../data/${ isPreview ? "preview-articles" : "stable-articles" }.json`
+            )
+        );
+        
+        const options = articles
+        .filter((a) => a.version.toLowerCase().includes(focusedValue))
+        .sort().filter((_, index) => index < 25);
 
-    async execute( interaction ) {
+        await interaction.respond(
+            options
+            .map((a) => ({ name: a.version, value: a.version }))
+        ).catch(() => {});
+    },
+    /**
+     * @param { import("discord.js").Client } client
+     * @param { import("discord.js").Interaction } interaction
+     */
+    async execute( client, interaction ) {
         try {
             const version = interaction.options.getString( "version" );
             const isPreview = ( interaction.options.getSubcommand() == "preview" );
@@ -38,12 +61,17 @@ module.exports = {
                 "\x1B[0m" + new Date().toLocaleTimeString() + " \x1B[33m\x1B[1m[DEBUG] \x1B[0m- " + interaction.user.tag + " (" + interaction.user.id + ") requested the changelog for the version " + version
             );
 
-            await interaction.deferReply({ ephemeral: true });
-            const { article, thumbnail } = ( isPreview ? previewArticles : stableArticles ).find((a) => a.version == version);
-            await interaction.editReply(
+            await interaction.deferReply({ ephemeral: false });
+            const articles = JSON.parse(
+                fs.readFileSync(
+                    __dirname + `/../data/${ isPreview ? "preview-articles" : "stable-articles" }.json`
+                )
+            );
+
+            const { article, thumbnail } = articles.find((a) => a.version == version);
+            interaction.editReply(
                 {
-                    ephemeral: true,
-                    content: "(This command is experimental and might get removed in the future!)",
+                    ephemeral: false,
                     embeds: [
                         {
                             title: article.title,
