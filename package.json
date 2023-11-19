@@ -3,7 +3,7 @@
     "main": "index.js",
     "scripts": {
         "start": "node index.js",
-        "save-changelogs": "node src/changelogs.js"
+        "setup": "node src/changelogs.js && node src/bds.js"
     },
     "dependencies": {
         "discord.js": "^14.10.2",

@@ -15,9 +15,11 @@ for (const folder of commandFolders) {
 	if (
 		"data" in command
 		&& "execute" in command
-	) if(!command.disabled) commands.push(command.data.toJSON());
-	else Utils.Logger.warn(
-		"The command at " + filePath + " is missing a required \"data\" or \"execute\" property."
+	) {
+		if(!command.disabled)
+			commands.push(command.data.toJSON());
+	} else Utils.Logger.warn(
+		"The command at " + folder + " is missing a required \"data\" or \"execute\" property."
 	);
 };
 

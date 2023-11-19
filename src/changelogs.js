@@ -7,8 +7,8 @@ const articleSections = {
 
 let stableArticles = [];
 let previewArticles = [];
-const saveChangelogs = () => {
-	fetch(
+const saveChangelogs = async() => {
+	await fetch(
 		"https://feedback.minecraft.net/api/v2/help_center/en-us/articles.json?per_page=100",
 		{
 			method: "GET",
@@ -49,4 +49,4 @@ const saveChangelogs = () => {
 };
 
 saveChangelogs();
-Utils.Logger.log( "Saving changelogs" );
+module.exports = saveChangelogs;
