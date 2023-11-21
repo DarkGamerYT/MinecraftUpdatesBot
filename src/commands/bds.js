@@ -77,7 +77,7 @@ module.exports = {
                                 : "https://cdn.discordapp.com/attachments/1071081145149689857/1093331067425005578/mc.png"
                             ),
                         },
-                        color: (isPreview ? 16763904 : 4652839),
+                        color: ( isPreview ? 0xFFCC00 : 0x46FF27 ),
                         description: `### Bedrock Dedicated Server for ${isPreview ? "Minecraft Preview" : "Minecraft"}\n- If you want to run a multiplayer server for Minecraft, start by downloading the Bedrock Deicated for either Windows or Ubuntu.`,
                         fields: [
                             {

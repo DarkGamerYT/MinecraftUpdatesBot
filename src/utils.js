@@ -103,8 +103,7 @@ const Utils = {
             url: article.article.url,
             color: (
                 articleSection == articleSections.BedrockPreview
-                ? 16763904
-                : 4652839
+                ? 0xFFCC00 : 0x46FF27
             ),
             description: ">>> " + (
                 articleSection == articleSections.BedrockPreview

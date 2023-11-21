@@ -79,7 +79,7 @@ module.exports = {
                     {
                         title: article.article.title,
                         url: article.article.url,
-                        color: ( isPreview ? 16763904 : 4652839 ),
+                        color: ( isPreview ? 0xFFCC00 : 0x46FF27 ),
                         description: `>>> **Changelog created on**: <t:${new Date(article.article.created_at).getTime() / 1000}:f> (<t:${new Date(article.article.created_at).getTime() / 1000}:R>)`,
                         author: {
                             name: ( isPreview ? "Beta and Preview Changelogs" : "Release Changelogs" ),
