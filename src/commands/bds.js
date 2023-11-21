@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require( "discord.js" );
 const fs = require( "node:fs" );
+const Utils = require( "../utils.js" );
 module.exports = {
     disabled: false,
     data: (
@@ -53,9 +54,7 @@ module.exports = {
         try {
             const version = interaction.options.getString( "version" );
             const isPreview = ( interaction.options.getSubcommand() == "preview" );
-            console.log(
-                "\x1B[0m" + new Date().toLocaleTimeString() + " \x1B[33m\x1B[1m[DEBUG] \x1B[0m- " + interaction.user.tag + " (" + interaction.user.id + ") requested bds v" + version
-            );
+            Utils.Logger.debug(interaction.user.tag + " (" + interaction.user.id + ") requested bds v" + version);
 
             await interaction.deferReply({ ephemeral: false });
             const articles = JSON.parse(fs.readFileSync(__dirname + "/../data/bds.json"));
@@ -66,7 +65,7 @@ module.exports = {
                 return;
             };
 
-            interaction.editReply({
+            const message = await interaction.editReply({
                 embeds: [
                     {
                         title: "BDS - " + (isPreview ? "Preview v" : "Stable v") + version,
@@ -127,6 +126,20 @@ module.exports = {
                     },
                 ],
             });
-        } catch(e) {};
+
+            await message.react("🚫");
+            const collector = message.createReactionCollector({
+                filter: (reaction, user) => (
+                    reaction.emoji.name == "🚫"
+                    && user.id == interaction.user.id
+                ), time: 10 * 1000
+            });
+
+            collector.on("collect", () => message.delete());
+            collector.on("end", (collected, reason) => {
+                const reaction = message.reactions.resolve("🚫");
+                reaction.users.remove(client.user.id).catch(() => {});
+            });
+        } catch {};
     },
 };

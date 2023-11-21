@@ -13,29 +13,20 @@ const formatDate = (d = Date.now()) => {
 };
 
 const Logger = {
-    log: (...data) => console.log(
-        "\x1B[0m[" + formatDate() + "] \x1B[33m\x1B[1m[INFO] \x1B[0m-",
+    _log: (name, date, color, ...data) => console.log(
+        "\x1B[0m[" + formatDate(date) + "] \x1B[" + color + "m\x1B[1m[" + name.toUpperCase() + "] \x1B[0m-",
         ...data,
     ),
-    warn: (...data) => console.log(
-        "\x1B[0m[" + formatDate() + "] \x1B[33m\x1B[1m[WARNING] \x1B[0m-",
-        ...data,
-    ),
-    success: (...data) => console.log(
-        "\x1B[0m[" + formatDate() + "] \x1B[32m\x1B[1m[SUCCESS] \x1B[0m-",
-        ...data,
-    ),
-    release: (releaseDate, ...data) => console.log(
-        "\x1B[0m[" + formatDate(releaseDate) + "] \x1B[32m\x1B[1m[NEW RELEASE] \x1B[0m-",
-        ...data,
-    ),
-    error: (...data) => console.log(
-        "\x1B[0m[" + formatDate() + "] \x1B[31m\x1B[1m[ERROR] \x1B[0m-",
-        ...data,
-    ),
+    log: (...data) => Logger._log("info", Date.now(), 33, ...data),
+    debug: (...data) => Logger._log("debug", Date.now(), 33, ...data),
+    warn: (...data) => Logger._log("warning", Date.now(), 33, ...data),
+    success: (...data) => Logger._log("success", Date.now(), 32, ...data),
+    release: (releaseDate, ...data) => Logger._log("release", releaseDate, 32, ...data),
+    error: (...data) => Logger._log("errror", Date.now(), 31, ...data),
 };
 
 const Utils = {
+    Logger,
     getSavedData: async (
         data,
         articleSection
@@ -312,8 +303,6 @@ const Utils = {
             },
         ).catch(() => setTimeout(() => Utils.storeCheck( post, version, articleSection ), 15000));
     },
-    
-    Logger,
 };
 
 const getStoreVersion = (
