@@ -57,7 +57,10 @@ module.exports = class {
                         );
                         const bedrockReleases = await Utils.getSavedData(
                             data.articles.filter(
-                                (a) => a.section_id == articleSections.BedrockPreview
+                                (a) => (
+									a.section_id == articleSections.BedrockRelease
+									&& !a.title.includes( "Java Edition" )
+								)
                             ).map( Utils.formatArticle ),
                             articleSections.BedrockRelease,
                         );
@@ -83,7 +86,7 @@ module.exports = class {
                                 articleSections.BedrockRelease, isHotfix
                             );
 
-                            bedrockReleases.push(Utils.formatArticle( article ));
+                            bedrockReleases.push(article);
                             await new Promise((res) => setTimeout( () => res(), 1500 ));
                         };
 
