@@ -298,9 +298,9 @@ const Utils = {
                             + " v" + version + " is out now but failed to send the message :<"
                         ),
                     );
-                } else setTimeout(() => Utils.storeCheck( post, version, articleSection ), 15000);
+                } else setTimeout(() => Utils.bdsCheck( post, version, articleSection ), 15000);
             },
-        ).catch(() => setTimeout(() => Utils.storeCheck( post, version, articleSection ), 15000));
+        ).catch(() => setTimeout(() => Utils.bdsCheck( post, version, articleSection ), 15000));
     },
 };
 
