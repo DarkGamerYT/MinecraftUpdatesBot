@@ -1,5 +1,7 @@
 const htmlParser = require( "node-html-parser" );
 const fs = require( "node:fs" );
+const Config = require( "./files/config.json" );
+
 const articleSections = {
     BedrockPreview: 360001185332,
     BedrockRelease: 360001186971,
@@ -135,20 +137,44 @@ const Utils = {
             timestamp: article.article.updated_at,
         };
     },
-    ping: ( channel ) => {
-        const pings = JSON.parse(fs.readFileSync( __dirname + "/files/pings.json" ));
-        channel.send({ content: pings.map((p) => `<@${p}>`).join( " " ) })
-        .then(
-            (msg) => {
-                Logger.success( "Successfully pinged everyone!" );
+    ping: ( client, channel, articleSection ) => {
+        const isPreview = articleSection == articleSections.BedrockPreview;
+        const pingRole = isPreview ? Config.pingRoles.Preview : Config.pingRoles.Stable;
 
-                msg.delete()
-                .then(() => Logger.success( "Successfully deleted the ping message!" ))
-                .catch(() => Logger.error( "Failed to delete the ping message :<" ));
-            },
-        ).catch(() => Logger.error( "Failed to send the ping message :<" ));
+        const sendMessage = async (msg) => {
+            const sent = await (channel.send({ content: msg })
+                .catch(() => Logger.error( "Failed to send the ping message :<" )));
+            Logger.success( "Successfully pinged everyone!" );
+
+            await sent.delete().catch(() => Logger.error( "Failed to delete the ping message :<" ));
+            Logger.success( "Successfully deleted the ping message!" );
+        }
+        
+        const pingGroups = [];
+        client.guilds.fetch(Config.guildId).then((guild) => {
+            guild.roles.fetch(pingRole).then((role) => {
+                const pingList = role.members.mapValues((user) => `<@${user.id}>`);
+                let currMessage = "";
+                for (let i = 0; i < pingList; i++) {
+                    const ping = pingList[i];
+                    // Add to ping group
+                    if (currMessage === "") currMessage = ping;
+                    else currMessage += ` ${ping}`;
+
+                    // Push ping group and start a new one
+                    if (currMessage.length >= 850) {
+                        pingGroups.push(currMessage);
+                        currMessage = "";
+                    }
+                }
+                // Push remaining ping group, if it exists
+                if (currMessage !== "") pingGroups.push(currMessage);
+            })
+        });
+        pingGroups.map(sendMessage);
     },
     storeCheck: (
+        client,
         post,
         version,
         articleSection,
@@ -169,7 +195,7 @@ const Utils = {
             async (data) => {
                 if (!data) {
                     setTimeout(() => {
-                        Utils.storeCheck( post, version, articleSection )
+                        Utils.storeCheck( client, post, version, articleSection )
                     }, 15000);
                     
                     return;
@@ -178,7 +204,7 @@ const Utils = {
                 const text = await data.text();
                 if (text.includes( "The server returned an empty list." )) {
                     setTimeout(() => {
-                        Utils.storeCheck( post, version, articleSection )
+                        Utils.storeCheck( client, post, version, articleSection )
                     }, 15000);
                     
                     return;
@@ -226,7 +252,7 @@ const Utils = {
                     }).then(
                         (message) => {
                             message.pin();
-                            Utils.ping(post);
+                            Utils.ping(client, post, articleSection);
                             Logger.success(
                                 ( isPreview ? "Minecraft Preview" : "Minecraft" )
                                 + " v" + version + " is out now on the Microsoft Store!"
@@ -238,9 +264,9 @@ const Utils = {
                             + " v" + version + " is out now on the Microsoft Store but failed to send the message :<"
                         ),
                     );
-                } else setTimeout(() => Utils.storeCheck( post, version, articleSection ), 15000);
+                } else setTimeout(() => Utils.storeCheck( client, post, version, articleSection ), 15000);
             },
-        ).catch(() => setTimeout(() => Utils.storeCheck( post, version, articleSection ), 15000));
+        ).catch(() => setTimeout(() => Utils.storeCheck( client, post, version, articleSection ), 15000));
     },
     bdsCheck: (
         post,

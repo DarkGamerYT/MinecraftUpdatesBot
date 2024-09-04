@@ -173,8 +173,8 @@ const createPost = (
                 },
             );
         
-            Utils.ping( post );
-            Utils.storeCheck( post, version, articleSection );
+            Utils.ping( client, post, articleSection );
+            Utils.storeCheck( client, post, version, articleSection );
             Utils.bdsCheck( post, version, articleSection );
         },
     ).catch(

@@ -4,6 +4,10 @@
     "repeateInterval": 60000,
 
     "channel": "1019665690233405500",
+    "pingRoles": {
+        "Stable": "",
+        "Preview": ""
+    },
     "tags": {
         "Stable": "1019665978369507480",
         "Preview": "1019666001987653673"
